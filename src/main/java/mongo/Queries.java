@@ -1,18 +1,11 @@
-package elastic;
-
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.transport.NoNodeAvailableException;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.metrics.max.Max;
+package mongo;
 
 public class Queries {
 	
 	public static Long getLastestDateValue( String index, String dateField, String selectionField, String selectionVal ) {
 		
 		
-		TransportClient tc = Client.getClient();
+		/*TransportClient tc = Client.getClient();
 
 		try {
 			SearchResponse sr = tc
@@ -28,8 +21,8 @@ public class Queries {
 		} catch( NoNodeAvailableException nna) {
 			nna.printStackTrace();
 			return null;
-		}
-
+		}*/
+		return null;
 	}
 	
 	public static void main(String[] args) {

@@ -29,15 +29,15 @@ public class Relation extends IndexItem {
 	public Map<String, Object> getMap() {
 		Map<String, Object> result = new HashMap<String, Object>();
 
-		result.put("relation", getElasticId() );
+		result.put("relation", getMongodbId() );
 		
 		result.put("project", project);
 		
 		result.put("sourceType", source.getType());
-		result.put("sourceId", source.getElasticId() );
+		result.put("sourceId", source.getMongodbId() );
 		
 		result.put("targetType", target.getType());
-		result.put("targetId", target.getElasticId() );
+		result.put("targetId", target.getMongodbId() );
 		
 		result.put("value", value);
 		result.put("weight", weight);
@@ -52,7 +52,7 @@ public class Relation extends IndexItem {
 		return "relations";
 	}
 	
-	public String getElasticId() {
+	public String getMongodbId() {
 		return project + "-" + source.id + "->" + target.id + "-" + evaluationDate;
 	}
 

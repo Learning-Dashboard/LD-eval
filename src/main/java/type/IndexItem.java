@@ -23,7 +23,7 @@ public abstract class IndexItem {
 	public static final String ON_ERROR_SET0 = "set0";
 	protected String onError = ON_ERROR_DROP;
 	
-	public String getElasticId() {
+	public String getMongodbId() {
 		return this.project + "-" + this.id + "-" + this.evaluationDate;
 	};
 	
