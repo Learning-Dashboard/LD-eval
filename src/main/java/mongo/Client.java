@@ -19,21 +19,23 @@ public class Client {
 
 	private Client() {
 		String connectionString;
-		//String user = Indexes.getInstance().getMongodbServerUser();
+		/*String user = Indexes.getInstance().getMongodbServerUser();
+		String password = Indexes.getInstance().getMongodbServerPassword();
+		String ip = Indexes.getInstance().getMongodbServerIp();
+		int port = Integer.parseInt(Indexes.getInstance().getMongodbServerPort());
+		String databaseName = Indexes.getInstance().getMongodbServerDatabase();*/
+
 		String user = null;
-		//String password = Indexes.getInstance().getMongodbServerPassword();
 		String password = null;
-		//String ip = Indexes.getInstance().getMongodbServerIp();
 		String ip = "localhost";
-		//int port = Integer.parseInt(Indexes.getInstance().getMongodbServerPort());
 		int port = 27017;
-		//String databaseName = Indexes.getInstance().getMongodbServerDatabase();
 		String databaseName = "mongo";
 
 		Logger mongodbLogger = Logger.getLogger("org.mongodb.driver");
 		mongodbLogger.setLevel(Level.WARNING);
 
-		if (user == null || user.isEmpty() || password == null || password.isEmpty())
+		if (user == null || user.isEmpty() || user.equals("null")
+				||password == null || password.isEmpty() || password.equals("null"))
 			connectionString = "mongodb://" + ip + ":" + port;
 		else connectionString = "mongodb://" + user + ":" + password + "@" + ip + ":" + port;
 		client = MongoClients.create(connectionString);
@@ -56,11 +58,8 @@ public class Client {
 	}
 
 	public static MongoDatabase getDatabase() {
-		return database;
-	}
-
-	public static void main(String[] args) {
 		MongoClient client = getClient();
+		return database;
 	}
 	
 }

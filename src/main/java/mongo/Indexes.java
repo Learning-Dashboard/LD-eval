@@ -30,8 +30,8 @@ public class Indexes {
 
 	private Indexes()  {
 		Properties indexProps = new Properties();
+		String indexPropertiesFile = "index.properties";
 		try {
-			String indexPropertiesFile = "index.properties";
 			input = Files.newInputStream(Paths.get(indexPropertiesFile));
 			indexProps.load(input);
 
@@ -48,7 +48,8 @@ public class Indexes {
 			metricsIndexType = indexProps.getProperty("metrics.index.type");
 			factorsIndexType = indexProps.getProperty("factors.index.type");
 			indicatorsIndexType = indexProps.getProperty("indicators.index.type");
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
