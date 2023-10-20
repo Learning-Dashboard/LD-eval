@@ -25,7 +25,7 @@ public abstract class IndexItem {
 	
 	public String getMongodbId() {
 		return this.project + "-" + this.id + "-" + this.evaluationDate;
-	};
+	}
 	
 	public abstract String getType();
 	

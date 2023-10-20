@@ -27,17 +27,17 @@ public class Relation extends IndexItem {
 	}
 	
 	public Map<String, Object> getMap() {
-		Map<String, Object> result = new HashMap<String, Object>();
+		Map<String, Object> result = new HashMap<>();
 
-		result.put("relation", getMongodbId() );
+		result.put("relation", getMongodbId());
 		
 		result.put("project", project);
 		
 		result.put("sourceType", source.getType());
-		result.put("sourceId", source.getMongodbId() );
+		result.put("sourceId", source.getMongodbId());
 		
 		result.put("targetType", target.getType());
-		result.put("targetId", target.getMongodbId() );
+		result.put("targetId", target.getMongodbId());
 		
 		result.put("value", value);
 		result.put("weight", weight);
