@@ -17,7 +17,7 @@ public class QueryDef {
 	// Project properties for variable resolution
 	private Properties projectProperties;
 	
-	// Query template to be executed on Elasticsearch
+	// Query template to be executed on MongoDB
 	private String queryTemplate;
 
 	// Query Properties (indexes, parameters, results...)

@@ -1,6 +1,5 @@
 package eval2;
 
-import java.io.File;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,9 +21,7 @@ import org.bson.BsonInt64;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import org.elasticsearch.index.query.QueryBuilder;
 import type.*;
-import util.FileUtils;
 import util.Schemas;
 
 public class MongoDB {
