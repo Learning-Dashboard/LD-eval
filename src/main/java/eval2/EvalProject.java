@@ -393,7 +393,7 @@ public class EvalProject {
 				Factor factor = factorMap.get(factorId);
 				
 				if ( factor == null ) {
-					log.info( "Warning: Impact of Metric " + metric.getName() + " on undefined Factor " + null + "is not stored."  );
+					log.info( "Warning: Impact of Metric " + metric.getName() + " on undefined Factor " + factor + "is not stored."  );
 				} else {
 					if ( !factor.isEnabled() ) {
 						log.info("Factor " + factor.getName() + " is disabled. No relation created.\n");

@@ -53,13 +53,13 @@ public class QueryDef {
 		String propValue = props.getProperty(key);
 		if ( propValue != null && propValue.startsWith("$$") ) {
 			String projectValue = projectProperties.getProperty( propValue.substring(2) );
-			if ( projectValue != null && projectValue.contains("#TODAY#") ){
+			if (projectValue != null && projectValue.contains("#TODAY#")){
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
-				propValue = projectValue.replace( "#TODAY#", LocalDate.now().format(formatter) );
+				propValue = projectValue.replace("#TODAY#", LocalDate.now().format(formatter));
 				System.out.println("REFORMED INDEX: " + propValue);
-				return propValue;
+			} else {
+				propValue = projectValue;
 			}
-			else return projectValue;
 		}
 		return propValue;
 	}

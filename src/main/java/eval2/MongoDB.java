@@ -253,9 +253,9 @@ public class MongoDB {
         }
 
         int writtenItems = result.getUpserts().size() + result.getMatchedCount();
-        if (result.wasAcknowledged()) return "BulkWrite success! " + writtenItems + " items written.";
+        if (result.wasAcknowledged()) return "BulkWrite success! " + writtenItems + " items written!\n";
         else {
-            log.warning("BulkWrite operation was not acknowledged.");
+            log.warning("BulkWrite operation was not acknowledged.\n");
             return "";
         }
     }
