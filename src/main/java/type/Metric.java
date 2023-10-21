@@ -1,5 +1,7 @@
 package type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,14 +65,16 @@ public class Metric extends IndexItem {
 	}
 
 	public Map<String, Object> getMap() {
-		Map<String, Object> result = new HashMap<String, Object>();
+		Map<String, Object> result = new HashMap<>();
+		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
+		ArrayList<String> arrayListParents = new ArrayList<>(Arrays.asList(parents));
 
 		result.put("type", getType() );
 		result.put("project", project);
 		result.put("metric", id);
 		
-		result.put("factors", parents);
-		result.put("weights", weights);
+		result.put("factors", arrayListParents);
+		result.put("weights", arrayListWeights);
 		
 		result.put("name", name);
 		result.put("description", description);

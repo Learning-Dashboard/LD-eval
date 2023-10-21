@@ -1,5 +1,7 @@
 package type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,15 +76,17 @@ public class Factor extends IndexItem {
 	}
 
 	public Map<String, Object> getMap() {
-		
-		Map<String, Object> result = new HashMap<String, Object>();
-		
+		Map<String, Object> result = new HashMap<>();
+		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
+		ArrayList<String> arrayListParents = new ArrayList<>(Arrays.asList(parents));
+		ArrayList<String> arrayListMetrics = new ArrayList<>();
+
 		result.put("project", project);
 		result.put("factor", id);
 		result.put("evaluationDate", evaluationDate);
 		
-		result.put("indicators", parents);
-		result.put("weights", weights);
+		result.put("indicators", arrayListParents);
+		result.put("weights", arrayListWeights);
 		
 		result.put("name", name);
 		result.put("description", description);
@@ -90,6 +94,9 @@ public class Factor extends IndexItem {
 		
 		result.put("value", value);
 		result.put("info", info);
+
+		result.put("missing_metrics", arrayListMetrics);
+		result.put("dates_mismatch_days", 0);
 		
 		return result;
 		

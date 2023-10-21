@@ -1,5 +1,7 @@
 package type;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,15 +69,17 @@ public class Indicator extends IndexItem {
 	}
 
 	public Map<String, Object> getMap() {
-		
-		Map<String, Object> result = new HashMap<String, Object>();
-		
+		Map<String, Object> result = new HashMap<>();
+		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
+		ArrayList<String> arrayListParents = new ArrayList<>(Arrays.asList(parents));
+		ArrayList<String> arrayListFactors = new ArrayList<>();
+
 		result.put("project", project);
-		result.put("indicator", id);
+		result.put("strategic_indicator", id);
 		result.put("evaluationDate", evaluationDate);
 		
-		result.put("parents", parents);
-		result.put("weights", weights);
+		result.put("parents", arrayListParents);
+		result.put("weights", arrayListWeights);
 		
 		result.put("name", name);
 		result.put("description", description);
@@ -83,6 +87,9 @@ public class Indicator extends IndexItem {
 		
 		result.put("value", value);
 		result.put("info", info);
+
+		result.put("missing_factors", arrayListFactors);
+		result.put("dates_mismatch_days", 0);
 		
 		return result;
 		

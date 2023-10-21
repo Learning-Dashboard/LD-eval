@@ -1,6 +1,8 @@
 package eval2;
 
+import java.io.File;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.mongodb.bulk.BulkWriteResult;
@@ -20,7 +22,9 @@ import org.bson.BsonInt64;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import org.elasticsearch.index.query.QueryBuilder;
 import type.*;
+import util.FileUtils;
 import util.Schemas;
 
 public class MongoDB {
@@ -61,6 +65,9 @@ public class MongoDB {
             database = databaseCache.get(mongodbDatabase);
             return;
         }
+
+        Logger mongodbLogger = Logger.getLogger("org.mongodb.driver");
+        mongodbLogger.setLevel(Level.WARNING);
 
         String connectionString;
         if (mongodbUser == null || mongodbUser.isEmpty()
@@ -142,10 +149,7 @@ public class MongoDB {
             return executionResult;
         }
 
-        log.info("MongoDB response: ");
-        for (Document doc: sr)
-            log.info(doc.toString());
-
+        log.info("MongoDB response: " + sr);
         for ( Map.Entry<String,String> e : queryResults.entrySet() ) {
             if (sr.size() == 0) executionResult.put(e.getKey(), 0);
             else {
@@ -168,11 +172,10 @@ public class MongoDB {
         String queryString = "{ \"pipeline\": " + template + "}";
         MongoCollection<Document> collection = database.getCollection(index);
         for (Map.Entry<String, Object> entry : params.entrySet())
-            queryString = queryString.replace("params." + entry.getKey(), String.valueOf(entry.getValue()));
+            queryString = queryString.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
 
         Document parsedQuery = Document.parse(queryString);
         List<Document> pipeline = parsedQuery.getList("pipeline", Document.class);
-        System.out.println(collection.aggregate(pipeline).into(new ArrayList<>()));
         return collection.aggregate(pipeline).into(new ArrayList<>());
     }
 
@@ -184,8 +187,8 @@ public class MongoDB {
 
         long deletedMetrics = deleteCurrentEvaluation(metricIndex, projectName, evaluationDate);
         long deletedRelations = deleteCurrentEvaluation(relationsIndex, projectName, evaluationDate);
-        log.info("deleted " + deletedMetrics + " metrics (evaluationDate=" + evaluationDate + ")");
-        log.info("deleted " + deletedRelations + " relations (evaluationDate=" + evaluationDate + ")");
+        log.info("deleted " + deletedMetrics + " metrics (evaluationDate=" + evaluationDate + ").");
+        log.info("deleted " + deletedRelations + " relations (evaluationDate=" + evaluationDate + ").\n");
 
         BulkWriteResult br = writeBulk(metricIndex, metrics);
         log.info(bulkResponseCheck(br));
@@ -249,14 +252,14 @@ public class MongoDB {
     private String bulkResponseCheck(BulkWriteResult result) {
         if (result == null) {
             log.warning("Result is null");
-            return null;
+            return "";
         }
 
-        int writtenItems = result.getInsertedCount() + result.getMatchedCount();
-        if (result.wasAcknowledged()) return "BulkWrite success! " + writtenItems + " items written";
+        int writtenItems = result.getUpserts().size() + result.getMatchedCount();
+        if (result.wasAcknowledged()) return "BulkWrite success! " + writtenItems + " items written.";
         else {
             log.warning("BulkWrite operation was not acknowledged.");
-            return "BulkWrite operation was not acknowledged.";
+            return "";
         }
     }
 
@@ -272,40 +275,4 @@ public class MongoDB {
         }
     }
 
-    public static void main(String[] args) {
-
-        String template = "[{\n" +
-                "  \"$match\": {\n" +
-                "    \"is_closed\": true,\n" +
-                "    \"milestone_closed\": false\n" +
-                "  }\n" +
-                "},\n" +
-                "{\n" +
-                "  \"$group\": {\n" +
-                "    \"_id\": null,\n" +
-                "    \"closedTasksTotal\": { \"$sum\": 1 },\n" +
-                "    \"closedTasksWithActualEffort\": {\n" +
-                "      \"$sum\": {\n" +
-                "        \"$cond\": [\n" +
-                "          { \"$ne\": [\"$actual_effort\", null] },\n" +
-                "          1,\n" +
-                "          0\n" +
-                "        ]\n" +
-                "      }\n" +
-                "    }\n" +
-                "  }\n" +
-                "},\n" +
-                "{\n" +
-                "  \"$project\": {\n" +
-                "    \"_id\": 0,\n" +
-                "    \"closedTasksTotal\": 1,\n" +
-                "    \"closedTasksWithActualEffort\": 1\n" +
-                "  }\n" +
-                "}]";
-
-        MongoDB mongoDB = new MongoDB(null, null, "localhost", 27017, "mongo");
-        HashMap<String,Object> m = new HashMap<>();
-        m.put("hola", null);
-        mongoDB.search(template, "taiga_pes_pes11a.userstories", m);
-    }
 }

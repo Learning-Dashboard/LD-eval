@@ -19,17 +19,11 @@ public class Client {
 
 	private Client() {
 		String connectionString;
-		/*String user = Indexes.getInstance().getMongodbServerUser();
+		String user = Indexes.getInstance().getMongodbServerUser();
 		String password = Indexes.getInstance().getMongodbServerPassword();
 		String ip = Indexes.getInstance().getMongodbServerIp();
 		int port = Integer.parseInt(Indexes.getInstance().getMongodbServerPort());
-		String databaseName = Indexes.getInstance().getMongodbServerDatabase();*/
-
-		String user = null;
-		String password = null;
-		String ip = "localhost";
-		int port = 27017;
-		String databaseName = "mongo";
+		String databaseName = Indexes.getInstance().getMongodbServerDatabase();
 
 		Logger mongodbLogger = Logger.getLogger("org.mongodb.driver");
 		mongodbLogger.setLevel(Level.WARNING);

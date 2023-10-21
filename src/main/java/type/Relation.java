@@ -30,7 +30,7 @@ public class Relation extends IndexItem {
 		Map<String, Object> result = new HashMap<>();
 
 		result.put("relation", getMongodbId());
-		
+		result.put("evaluationDate", evaluationDate);
 		result.put("project", project);
 		
 		result.put("sourceType", source.getType());
@@ -42,7 +42,8 @@ public class Relation extends IndexItem {
 		result.put("value", value);
 		result.put("weight", weight);
 
-		result.put("evaluationDate", evaluationDate);
+		result.put("targetValue", target.getValue().toString());
+		result.put("sourceLabel", null);
 
 		return result;
 	}
