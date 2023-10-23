@@ -52,7 +52,7 @@ dashboard.notification.url=http://<address>/api/strategicIndicators/assess
 ```
 
 ### projects/default/project.properties
-The project.properties file contains the top-level configuration for a project evaluation. It defines the project.name (which will be appended to the metrics, factors, indicators and relations index names), the addresses to source and target MongoDB servers, the name and other properties of the source indexes (e.g. Github, Taiga...), and the names and types of the created (or reused) target indexes (metrics, factors, indicators and relations). 
+The project.properties file contains the top-level configuration for a project evaluation. It defines the project.name (which will be appended to the metrics, factors, indicators and relations index names), the addresses to source and target MongoDB servers (host name, port number, database name...), the name and other properties of the source indexes (e.g. Github, Taiga...), and the names and types of the created (or reused) target indexes (metrics, factors, indicators and relations). 
 
 The Error Handling is configurable. Error handling takes place when the computation of metrics, factors, or indicators fails. This can happen because of missing data, errors in formulas (e.g. division by 0) and for other reasons. The onError property allows to set a project-wide default (which can be overwritten for metrics, factors...) how to handle these errors.
 
@@ -155,17 +155,17 @@ result.issuesTotal=issuesTotal
 
 + The query uses one parameter (bcKey), which is also read from the project properties file. Parameters of a query are declared with prefix 'param.'
 
-+ The query defines one result (params), that is specified as a path within the query result delivered by MongoDB. Results are declared with prefix 'result.'
++ The query defines one result (issuesTotal), that is specified as a path within the query result delivered by MongoDB. Results are declared with prefix 'result.'
 All results computed by params queries can be used as parameters (without declaration) in subsequent *params* and *metrics* queries. Make sure that the names of the results of params queries are unique, otherwise they will get overwritten.
 
 __Query Parameters__
 
 LD-eval internally uses search templates to perform *params, metrics*, and other queries. 
-Search templates can receive parameters (noted with double curly braces: {{parameter}}). The parameters are replaced by actual values, before the query is executed. The replacement is done verbatim and doesn't care about data types. Thus, if you want a string parameter, you'll have to add quotes around the parameter yourself (as seen below with the evaluationDate parameter).
+Search templates can receive parameters ( noted with double curly braces: {{parameter}} ). The parameters are replaced by actual values, before the query is executed. The replacement is done verbatim and doesn't care about data types. Thus, if you want a string parameter, you'll have to add quotes around the parameter yourself (for example, writing "{{parameter}}").
 
 + The evaluationDate is available to all *params* and *metrics* queries without declaration. LD-eval started without command-line options sets the evaluationDate to the date of today (string, format yyyy-MM-dd).
   
-+ Elements of the *project.properties* can be declared as a parameter with the $$-notation, as seen above (param.bcKey).
++ Elements of the *project.properties* can be declared as a parameter with the $$ notation, as seen above (param.bcKey).
   
 + Literals (numbers and strings) can be used after declaration as parameters (e.g by *param.myThreshold=15*).
   
@@ -174,7 +174,7 @@ Search templates can receive parameters (noted with double curly braces: {{param
 ### projects/default/metrics
 The folder contains the metrics definitions of a project. As *params queries*, *metrics queries* consist of a pair of files, a .properties and a .query file. In addition to params queries, metrics queries compute a metric value defined by a formula. The computed metric value is stored in the metrics index (defined in *project.properties*) after the query execution.
 
-Computed metrics get aggregated into factors. Therefore you have to specify the factors, a metric is going to influence. Metrics can influence one or more factors, that are supplied as a comma-separated list of factor-IDs together with the weight describing the strength of the influence. In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
+Computed metrics get aggregated into factors. Therefore you have to specify the factors, a metric is going to influence. Metrics can influence one or more factors, that are supplied as a comma-separated list of factor IDs together with the weight describing the strength of the influence. In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
 
 __Example: metric1 query__
 
@@ -330,7 +330,7 @@ DON'T TOUCH, unless you know what you are doing.
   
 * Java 1.8 is installed.
   
-* A projects folder exists in the directory of qrapids-eval-<version>-jar-with-dependecies.jar and contains a proper quality model configuration.
+* A projects folder exists in the directory of qrapids-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
 
 ### Run without commandline parameters
 The date of the current day (format yyyy-MM-dd) will be available as parameter 'evaluationDate' in params and metrics queries.
