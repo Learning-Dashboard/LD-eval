@@ -94,7 +94,7 @@ public class Eval {
 					ep.run();
 				} catch( Exception e ) {
 					e.printStackTrace();
-					log.severe("Evaluaton of project in folder " + projectDir + " terminated with an error!" );
+					log.severe("Evaluation of project in folder " + projectDir + " terminated with an error!" );
 				}
 			}
 		}

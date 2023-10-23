@@ -84,7 +84,7 @@ public class EvalProject {
 				projectProperties.getProperty("mongodb.target.user"),
 				projectProperties.getProperty("mongodb.target.password"),
 				projectProperties.getProperty("mongodb.target.ip"),
-				Integer.parseInt(projectProperties.getProperty("mongodb.targer.port")),
+				Integer.parseInt(projectProperties.getProperty("mongodb.target.port")),
 				projectProperties.getProperty("mongodb.target.database")
 		);
 		
