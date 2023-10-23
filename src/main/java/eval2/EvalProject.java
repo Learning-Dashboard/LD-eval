@@ -498,7 +498,8 @@ public class EvalProject {
 	private Double evaluate(String metric, Map<String, Object> evalParameters) {
 		for ( String key : evalParameters.keySet() )
 			metric = metric.replaceAll( key, evalParameters.get(key).toString() );
-		return Evaluator.eval(metric);
+		double res = Evaluator.eval(metric);
+		return Math.min(res, 1.0);
 	}
 
 	/**
