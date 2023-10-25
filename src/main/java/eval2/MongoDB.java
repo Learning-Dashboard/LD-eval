@@ -167,6 +167,7 @@ public class MongoDB {
      */
     public List<Document> search(String template, String index, Map<String,Object> params) {
         String queryString = "{ \"pipeline\": " + template + "}";
+        collectionExists(index);
         MongoCollection<Document> collection = database.getCollection(index);
         for (Map.Entry<String, Object> entry : params.entrySet())
             queryString = queryString.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
@@ -235,6 +236,7 @@ public class MongoDB {
 
     private BulkWriteResult writeBulk(String collectionName, Collection<? extends IndexItem> items) {
         List<WriteModel<Document>> writeModels = new ArrayList<>();
+        collectionExists(collectionName);
         MongoCollection<Document> collection = database.getCollection(collectionName);
         for (IndexItem item : items) {
             Document filter = new Document("_id", item.getMongodbId());
@@ -264,12 +266,19 @@ public class MongoDB {
         try {
             Document filter = new Document("evaluationDate", evaluationDate)
                 .append("project", project);
+            collectionExists(collectionName);
             DeleteResult result = database.getCollection(collectionName).deleteMany(filter);
             return result.getDeletedCount();
         } catch (RuntimeException rte) {
             log.warning(rte.getMessage());
             return 0;
         }
+    }
+
+    private void collectionExists(String collectionName) throws MongoException {
+        List<String> collections = database.listCollectionNames().into(new ArrayList<>());
+        if (!collections.contains(collectionName))
+            throw new MongoException("Collection '" + collectionName + "' does not exist");
     }
 
 }

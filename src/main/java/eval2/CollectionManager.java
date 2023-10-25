@@ -1,7 +1,9 @@
 package eval2;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -32,11 +34,23 @@ public class CollectionManager {
 			System.out.println("Index already exists: " + collectionName);
 		}
 		else {
-			ValidationOptions validationOptions = new ValidationOptions().validator(schema);
-			CreateCollectionOptions options = new CreateCollectionOptions().validationOptions(validationOptions);
-			mongoDatabase.createCollection(collectionName, options);
-			for (String name : mongoDatabase.listCollectionNames())
-				if (name.equals(collectionName)) System.out.println("Index created: " + collectionName);
+			try {
+				ValidationOptions validationOptions = new ValidationOptions().validator(schema);
+				CreateCollectionOptions options = new CreateCollectionOptions().validationOptions(validationOptions);
+				mongoDatabase.createCollection(collectionName, options);
+
+				for (String name : mongoDatabase.listCollectionNames()) {
+					if (name.equals(collectionName)) {
+						System.out.println("Index created: " + collectionName);
+						return;
+					}
+				}
+				System.out.println("Index could not be created: " + collectionName);
+			}
+			catch (MongoException e) {
+				e.printStackTrace();
+				System.out.println("Index could not be created: " + collectionName);
+			}
 		}
 	}
 
@@ -46,7 +60,11 @@ public class CollectionManager {
 	 * @param document object to be written
 	 * @return an UpdateResult indicating if the operation was performed correctly
 	 */
-	public UpdateResult writeDocument(String collectionName, Document document) {
+	public UpdateResult writeDocument(String collectionName, Document document) throws MongoException {
+		List<String> collections = mongoDatabase.listCollectionNames().into(new ArrayList<>());
+		if (!collections.contains(collectionName))
+			throw new MongoException("Collection '" + collectionName + "' does not exist");
+
 		MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
 		String id = document.getString("_id");
 		UpdateOptions options = new UpdateOptions().upsert(true);
