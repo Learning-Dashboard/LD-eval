@@ -140,7 +140,8 @@ public class QueryDef {
 	 */
 	public String[] getPropertyAsStringArray(String key) {
 		String commaSeparated = props.getProperty(key);
-		return commaSeparated.split(",");
+		if (commaSeparated == null || commaSeparated.equals("")) return new String[0];
+		else return commaSeparated.split(",");
 	}
 	
 	/**
@@ -152,6 +153,7 @@ public class QueryDef {
 	public Double[] getPropertyAsDoubleArray(String key) {
 		
 		String commaSeparated = props.getProperty(key);
+		if (commaSeparated == null || commaSeparated.equals("")) return new Double[0];
 		String[] parts = commaSeparated.split(",");
 		Double[] doubleArray = new Double[parts.length];
 		
