@@ -99,6 +99,24 @@ public class EvalProject {
 		List<Metric> metrics = executeMetricQueries(queryParameter, metricQuerySet);
 		log.info("Storing metrics (" + metrics.size() + " computed)\n");
 		mongodbTarget.storeMetrics( projectProperties, evaluationDate, metrics );
+
+		List<Relation> metricrelations = computeMetricRelations(metrics);
+		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
+		mongodbTarget.storeRelations(projectProperties, metricrelations);
+
+        log.info("Computing Factors...\n");
+        Collection<Factor> factors = computeFactors();
+		log.info("Storing factors (" + factors.size() + " computed)\n");
+		mongodbTarget.storeFactors(projectProperties, evaluationDate, factors);
+
+		List<Relation> factorrelations = computeFactorRelations(factors);
+		log.info("Storing factors relations (" + factorrelations.size() + " computed)\n");
+		mongodbTarget.storeRelations(projectProperties, factorrelations);
+
+		log.info("Computing Indicators...\n");
+		Collection<Indicator> indicators = computeIndicators();
+		log.info("Storing factors (" + factors.size() + " computed)\n");
+		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
 	}
 	
 
@@ -120,7 +138,7 @@ public class EvalProject {
 				log.info("Factor " + fact.getFactor() + " is disabled.\n");
 				continue;
 			}
-			else log.info("Computing factor  " + fact.getFactor() + ".\n") ;
+			else log.info("Computing factor " + fact.getFactor() + ".\n") ;
 
 			Map<String,Object> parameters = new HashMap<>();
 			parameters.put( "evaluationDate", evaluationDate);
@@ -421,7 +439,7 @@ public class EvalProject {
 		for ( String f : factors ) {
 			Boolean enabled = Boolean.parseBoolean(  factorProperties.getProperty(f + ".enabled") );
 			String project = projectProperties.getProperty("project.name");
-			String[] indicators = factorProperties.getProperty(f + ".indicators").split(",");
+			String[] indicators = getAsStringArray( factorProperties.getProperty(f + ".indicators") );
 			Double[] weights = getAsDoubleArray( factorProperties.getProperty(f + ".weights") );
 			String name = factorProperties.getProperty(f + ".name");
 			String description = factorProperties.getProperty(f + ".description");
@@ -452,7 +470,7 @@ public class EvalProject {
 		for ( String i : indicators ) {
 			Boolean enabled = Boolean.parseBoolean(  indicatorProperties.getProperty(i + ".enabled") );
 			String project = projectProperties.getProperty("project.name");
-			String[] parents = indicatorProperties.getProperty(i + ".parents").split(",");
+			String[] parents = getAsStringArray( indicatorProperties.getProperty(i + ".parents") );
 			Double[] weights = getAsDoubleArray( indicatorProperties.getProperty(i + ".weights") );
 			String name = indicatorProperties.getProperty(i + ".name");
 			String description = indicatorProperties.getProperty(i + ".description");
@@ -550,12 +568,21 @@ public class EvalProject {
 		Properties props = FileUtils.loadProperties(propertyFile);
 		return new QueryDef(name, projectProperties, queryTemplate, props);
 	}
+
+	public String[] getAsStringArray(String commaSeparated) {
+		if (commaSeparated == null || commaSeparated.equals(""))
+			return new String[0];
+		else return commaSeparated.split(",");
+	}
 	
 	/**
 	 * Return Property values with comma as a Double array:
 	 * "1.5,2.3" becomes [1.5,2.3]
 	 */
 	public Double[] getAsDoubleArray(String commaSeparated) {
+		if (commaSeparated == null || commaSeparated.equals(""))
+			return new Double[0];
+
 		String[] parts = commaSeparated.split(",");
 		Double[] doubleArray = new Double[parts.length];
 		for (int i = 0; i < parts.length; ++i)

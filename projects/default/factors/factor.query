@@ -1,32 +1,26 @@
-{
-
-  "size" : 0,
-  
-  "query": {
-    "bool": {
-      "must": [
-        {  "term": { "evaluationDate" : "{{evaluationDate}}" } },
-        {  "term": { "project" : "{{project}}" } },
-        {  "term": { "targetType": "{{targetType}}" } },
-        {  "term": { "targetId": "{{targetId}}" } }
-      ]
+[
+  {
+    $match: {
+      "evaluationDate": "{{evaluationDate}}",
+      "project": "{{project}}",
+      "targetType": "{{targetType}}",
+      "targetId": "{{targetId}}"
     }
   },
-  
-  "aggs": {
-  
-    "values": {
-      "sum": {
-        "field": "value"
-      }
-    },
-    
-    "weights" : {
-      "sum": {
-        "field": "weight"
-      }
+  {
+    $group: {
+      _id: null,
+      values: { $sum: "$value" },
+      weights: { $sum: "$weight" },
+      numberOfMetrics: { $sum: 1 }
     }
-    
+  },
+  {
+    $project: {
+      _id: 0,
+      values: 1,
+      weights: 1,
+      numberOfMetrics: 1
+    }
   }
-  
-}
+]

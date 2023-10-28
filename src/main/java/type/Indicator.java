@@ -46,6 +46,11 @@ public class Indicator extends IndexItem {
 		this.onError = onError;
 
 	}
+
+	@Override
+	public String getMongodbId() {
+		return this.id + "-" + this.evaluationDate;
+	}
 	
 	@Override
 	public String getType() {

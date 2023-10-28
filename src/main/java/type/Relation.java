@@ -42,7 +42,7 @@ public class Relation extends IndexItem {
 		result.put("value", value);
 		result.put("weight", weight);
 
-		result.put("targetValue", target.getValue().toString());
+		result.put("targetValue", null);
 		result.put("sourceLabel", null);
 
 		return result;
