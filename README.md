@@ -3,7 +3,7 @@ LD-eval computes metrics, factors, and indicators on raw data stored in a MongoD
 
 ## Configuration
 Learning-Dashboard eval is a commandline tool and is configured via a set of text files (.query and .properties) that are stored in a special folder structure. The top-folder is named 'projects'. 
-This folder has to be present in the same directory where the qrapids-eval executable JAR file is stored. Each subfolder defines a quality model for a project to be evaluated. 
+This folder has to be present in the same directory where the LD-eval executable JAR file is stored. Each subfolder defines a quality model for a project to be evaluated. 
 Moreover, it can also be executed as a Docker container in a Docker environment by using a script.
 
 The folder structure shown below defines the evaluation of one project named 'default'.
@@ -330,27 +330,27 @@ DON'T TOUCH, unless you know what you are doing.
   
 * Java 1.8 is installed.
   
-* A projects folder exists in the directory of qrapids-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
+* A projects folder exists in the directory of LD-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
 
 ### Run without commandline parameters
 The date of the current day (format yyyy-MM-dd) will be available as parameter 'evaluationDate' in params and metrics queries.
 
 ```
-java -jar qrapids-eval-<version>-jar-with-dependencies.jar
+java -jar LD-eval-<version>-jar-with-dependencies.jar
 ```
 
 ### Specify a single evaluation date
 The specified evaluationDate will be available as parameter 'evaluationDate' in params and metrics  queries.
 
 ```
-java -jar qrapids-eval-<version>-jar-with-dependencies.jar evaluationDate 2019-03-01
+java -jar LD-eval-<version>-jar-with-dependencies.jar evaluationDate 2019-03-01
 ```
 
 ### Specify a date range for evaluation
 The defined projects will be evaluated for each day in the specified range.
 
 ```
-java -jar qrapids-eval-<version>-jar-with-dependencies.jar from 2019-03-01 to 2019-03-30
+java -jar LD-eval-<version>-jar-with-dependencies.jar from 2019-03-01 to 2019-03-30
 ```
 
 ### Build the connector
@@ -360,7 +360,7 @@ mvn package assembly:single
 After build, you'll find the generated jar in the target folder.
 
 ## Model validation
-Before the evaluation of a project starts, qrapids-eval performs a basic evaluation of the qualtity model. A warning is logged in the following cases:
+Before the evaluation of a project starts, LD-eval performs a basic evaluation of the qualtity model. A warning is logged in the following cases:
 
 + A metrics-query mentions a factor in the factors-property, but the factor isn't defined in the factors.properties file.
 
