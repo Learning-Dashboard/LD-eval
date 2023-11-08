@@ -137,9 +137,9 @@ public class Eval {
 	
 	private static void usage() {
 		System.out.println("Usage:");
-		System.out.println("java -jar qrapids-eval.jar");
-		System.out.println("java -jar qrapids-eval.jar evaluationDate 2019-01-31");
-		System.out.println("java -jar qrapids-eval.jar from 2019-01-01 to 2019-01-31");
+		System.out.println("java -jar LD-eval.jar");
+		System.out.println("java -jar LD-eval.jar evaluationDate 2019-01-31");
+		System.out.println("java -jar LD-eval.jar from 2019-01-01 to 2019-01-31");
 	}
 
 
