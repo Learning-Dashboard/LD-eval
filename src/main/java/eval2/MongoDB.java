@@ -126,12 +126,7 @@ public class MongoDB {
      * @param queryDef the queryDef to execute
      * @return a map containing the key-value (property-responseValue) pairs of the results
      */
-    public Map<String,Object> execute( Map<String,Object> externalParameters, QueryDef queryDef ) {
-
-        log.info("Executing QueryDef " + queryDef.getName() + "\n"
-            + "Index: " + queryDef.getProperty("index") + "\n"
-            + "External parameters: " + externalParameters + "\n"
-            + "Query parameters: " + queryDef.getQueryParameter() + "\n");
+    public Map<String,Object> execute( Map<String,Object> externalParameters, QueryDef queryDef, boolean set0 ) {
 
         Map<String,Object> execParams = new HashMap<>();
         execParams.putAll(externalParameters);
@@ -146,9 +141,16 @@ public class MongoDB {
             return executionResult;
         }
 
-        log.info("MongoDB response: " + sr);
+        log.info("Executing QueryDef " + queryDef.getName() + "\n"
+                + "Index: " + queryDef.getProperty("index") + "\n"
+                + "External parameters: " + externalParameters + "\n"
+                + "Query parameters: " + queryDef.getQueryParameter() + "\n"
+                + "MongoDB response: " + sr + "\n");
+
         for ( Map.Entry<String,String> e : queryResults.entrySet() ) {
-            if (sr.size() == 0) executionResult.put(e.getKey(), 0);
+            if (sr.size() == 0) {
+                if (set0) executionResult.put(e.getKey(), 0);
+            }
             else {
                 Document doc = sr.get(0);
                 Object o = doc.get(e.getValue());

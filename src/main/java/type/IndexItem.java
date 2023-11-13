@@ -5,17 +5,15 @@ import java.util.Map;
 public abstract class IndexItem {
 
 	protected boolean enabled;
-	
 	protected String project;
 	protected String id;
 	protected String evaluationDate;
-	
-	protected String [] parents;
+	protected String [] children;
+	protected String [] missingChildren;
 	protected Double [] weights;
 	protected String name;
 	protected String description;
 	protected String datasource;
-
 	protected Double value;
 	protected String info;
 	
@@ -55,12 +53,20 @@ public abstract class IndexItem {
 		this.evaluationDate = evaluationDate;
 	}
 
-	public String[] getParents() {
-		return parents;
+	public String[] getChildren() {
+		return children;
 	}
 
-	public void setParents(String[] parents) {
-		this.parents = parents;
+	public void setChildren(String[] children) {
+		this.children = children;
+	}
+
+	public String[] getMissingChildren() {
+		return missingChildren;
+	}
+
+	public void setMissingChildren(String[] missingChildren) {
+		this.missingChildren = missingChildren;
 	}
 
 	public Double[] getWeights() {

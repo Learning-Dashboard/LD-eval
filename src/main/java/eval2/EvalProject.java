@@ -1,12 +1,7 @@
 package eval2;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import type.Factor;
@@ -15,8 +10,6 @@ import type.Indicator;
 import type.Metric;
 import type.Relation;
 
-import java.util.Properties;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import util.Evaluator;
@@ -100,23 +93,25 @@ public class EvalProject {
 		log.info("Storing metrics (" + metrics.size() + " computed)\n");
 		mongodbTarget.storeMetrics( projectProperties, evaluationDate, metrics );
 
-		List<Relation> metricrelations = computeMetricRelations(metrics);
-		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
-		mongodbTarget.storeRelations(projectProperties, metricrelations);
-
         log.info("Computing Factors...\n");
         Collection<Factor> factors = computeFactors();
 		log.info("Storing factors (" + factors.size() + " computed)\n");
 		mongodbTarget.storeFactors(projectProperties, evaluationDate, factors);
 
+		/*
+		log.info("Computing Indicators...\n");
+		Collection<Indicator> indicators = computeIndicators();
+		log.info("Storing indicators (" + factors.size() + " computed)\n");
+		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
+
+		List<Relation> metricrelations = computeMetricRelations(metrics);
+		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
+		mongodbTarget.storeRelations(projectProperties, metricrelations);
+
 		List<Relation> factorrelations = computeFactorRelations(factors);
 		log.info("Storing factors relations (" + factorrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, factorrelations);
-
-		log.info("Computing Indicators...\n");
-		Collection<Indicator> indicators = computeIndicators();
-		log.info("Storing factors (" + factors.size() + " computed)\n");
-		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
+		 */
 	}
 	
 
@@ -138,55 +133,96 @@ public class EvalProject {
 				log.info("Factor " + fact.getFactor() + " is disabled.\n");
 				continue;
 			}
-			else log.info("Computing factor " + fact.getFactor() + ".\n") ;
+			else log.info("Computing factor " + fact.getFactor() + ".\n");
 
-			Map<String,Object> parameters = new HashMap<>();
-			parameters.put( "evaluationDate", evaluationDate);
-			parameters.put( "project", projectProperties.getProperty("project.name") );
-			parameters.put( "targetType", e.getValue().getType() );
-			parameters.put( "targetId", e.getValue().getMongodbId() );
-			
-			Map<String,Object> results = mongodbTarget.execute(parameters, factorQuery);
-			String metricDef = factorQuery.getProperty("metric");
+			HashMap<String, Double> metricValues = new HashMap<>();
+			List<String> missingMetrics = new ArrayList<>();
+
+			for (String metric : fact.getMetrics()) {
+				Map<String, Object> parameters = new HashMap<>();
+				parameters.put("evaluationDate", evaluationDate);
+				parameters.put("project", projectProperties.getProperty("project.name"));
+				parameters.put("metric", metric);
+				Map<String, Object> results = mongodbTarget.execute(parameters, factorQuery, false);
+				if (!results.isEmpty() && results.containsKey("value")) {
+					Object value = results.get("value");
+					if (value instanceof Double)
+						metricValues.put(metric, (Double) value);
+					else if (value instanceof Integer)
+						metricValues.put(metric, ((Integer) value).doubleValue());
+				}
+				else missingMetrics.add(metric);
+			}
 
 			Double factorValue;
+			boolean nonWeighted = Arrays.asList(fact.getWeights()).contains(-1.0);
+			boolean someNonWeighted = Arrays.stream(fact.getWeights()).anyMatch(val -> !val.equals(-1.0));
+
 			try {
-				factorValue = evaluate( metricDef, results );
-			} catch( RuntimeException rte ) {
-				log.warning("Evaluation of formula " + metricDef + " failed. \nFactor: " + fact.getName() + "\n");
-				if ( fact.onErrorSet0() ) {
+				if (fact.getMetrics().length != fact.getWeights().length)
+					throw new IllegalArgumentException("Metrics and weights arrays must have the same length.");
+				else {
+					if (nonWeighted && someNonWeighted)
+						throw new IllegalArgumentException("Weights arrays must be fully weighted or fully non weighted.");
+				}
+				factorValue = evaluate(fact.getMetrics(), fact.getWeights(), metricValues);
+			}
+			catch (IllegalArgumentException exc) {
+				log.warning(exc.getMessage() + "\nFactor: " + fact.getName() + "\n");
+				if (fact.onErrorSet0()) {
 					log.warning("Factor " + fact.getFactor() + " set to 0.\n");
 					factorValue = 0.0;
-				} else {
+				}
+				else {
 					log.warning("Factor " + fact.getFactor() + " is dropped.\n");
 					continue;
 				}
 			}
 				
-			if ( factorValue.isNaN() || factorValue.isInfinite() ) {
-				log.warning("Evaluation of Factor " + fact.getFactor() + " resulted in non-numeric value.\n" );
-				if ( fact.onErrorSet0() ) {
+			if (factorValue.isNaN() || factorValue.isInfinite()) {
+				log.warning("Evaluation of factor " + fact.getFactor() + " resulted in non-numeric value.\n" );
+				if (fact.onErrorSet0()) {
 					log.warning("Factor " + fact.getFactor() + " set to 0.\n");
 					factorValue = 0.0;
-				} else {
+				}
+				else {
 					log.warning("Factor " + fact.getFactor() + " is dropped.\n");
 					continue;
 				}
-			} else {
-				log.info("Value of factor " + fact.getFactor() + " = " + factorValue + "\n");
 			}
+			else log.info("Value of factor " + fact.getFactor() + " = " + factorValue + "\n");
 			
 			fact.setValue(factorValue);
 			fact.setEvaluationDate(evaluationDate);
-			
-			String info;
-			info = "parameters: " + parameters + "\n";
-			info += "query-properties: " + factorQuery.getQueryParameter().toString() + "\n";
-			info += "executionResults: " + results.toString() + "\n";
-			info += "formula: " + metricDef + "\n";
-			info += "value: " + factorValue;
+			String[] missingChildren = new String[missingMetrics.size()];
+			fact.setMissingChildren(missingMetrics.toArray(missingChildren));
+			boolean weighted = !Arrays.stream(fact.getWeights()).allMatch(val -> val.equals(-1.0));
 
-			fact.setInfo(info);
+			StringBuilder info = new StringBuilder("metrics: {");
+			if (fact.getMetrics().length == fact.getWeights().length) {
+				if (someNonWeighted && nonWeighted)
+					info.append(" }, formula: average, value: ").append(fact.getValue());
+				else {
+					for (Map.Entry<String, Double> entry : metricValues.entrySet()) {
+						String metricInfo = " " + entry.getKey() + " (value: " + entry.getValue() + ", ";
+						if (weighted) {
+							for (int i = 0; i < fact.getMetrics().length; ++i) {
+								if (Objects.equals(entry.getKey(), fact.getMetrics()[i])) {
+									Double w = fact.getWeights()[i] * 100.0;
+									metricInfo += "weight: " + w.intValue() + "%);";
+									break;
+								}
+							}
+						} else metricInfo += "no weighted);";
+						info.append(metricInfo);
+					}
+					if (weighted) info.append(" }, formula: weighted average, value: ").append(fact.getValue());
+					else info.append(" }, formula: average, value: ").append(fact.getValue());
+				}
+			}
+			else info.append(" }, formula: average, value: ").append(fact.getValue());
+
+			fact.setInfo(info.toString());
 			result.add(fact);
 		}
 
@@ -198,7 +234,7 @@ public class EvalProject {
 	 * @param factors evaluations to be computed
 	 * @return List of Relation
 	 */
-	private List<Relation> computeFactorRelations( Collection<Factor> factors ) {
+	/*private List<Relation> computeFactorRelations( Collection<Factor> factors ) {
 		List<Relation> result = new ArrayList<>();
 		Map<String,Indicator> indicatorMap = readIndicatorMap();
 		
@@ -222,7 +258,7 @@ public class EvalProject {
 		}
 
 		return result;
-	}
+	}*/
 	
 	/**
 	 * Compute Indicator values based on Factor-indicator relations
@@ -250,7 +286,7 @@ public class EvalProject {
 			parameters.put( "targetType", e.getValue().getType() );
 			parameters.put( "targetId", e.getValue().getMongodbId() );
 			
-			Map<String,Object> results = mongodbTarget.execute(parameters, indicatorQuery);
+			Map<String,Object> results = mongodbTarget.execute(parameters, indicatorQuery, false);
 			String metricDef = indicatorQuery.getProperty( "metric" );
 
 			Double indicatorValue;
@@ -307,7 +343,7 @@ public class EvalProject {
 		allExecutionResults.put("evaluationDate", evaluationDate);
 
 		for ( String key : querySets.keySet() ) {
-			Map<String,Object> executionResult = mongodbSource.execute( allExecutionResults, querySets.get(key) );
+			Map<String,Object> executionResult = mongodbSource.execute( allExecutionResults, querySets.get(key), true );
 			allExecutionResults.putAll(executionResult);
 		}
 		
@@ -335,7 +371,7 @@ public class EvalProject {
 			info += "query-properties: " + metricQueryDef.getQueryParameter().toString() + "\n";
 			
 			log.info("Executing metric query: " + key + "\n");
-			Map<String,Object> executionResult = mongodbSource.execute( parameters, metricQueryDef );
+			Map<String,Object> executionResult = mongodbSource.execute( parameters, metricQueryDef, true );
 			log.info("result: " + executionResult + "\n");
 			
 			info += "executionResults: " + executionResult.toString() + "\n";
@@ -377,17 +413,14 @@ public class EvalProject {
 			String metric = metricQueryDef.getName();
 			String name = metricQueryDef.getProperty("name");
 			String description = metricQueryDef.getProperty("description");
-			String[] factors = metricQueryDef.getPropertyAsStringArray("factors");
-			Double[] weights = metricQueryDef.getPropertyAsDoubleArray("weights");
+
 			String datasource = mongodbSource.getMongodbIP() + ":" + mongodbSource.getMongodbPort() +
 				"/" + mongodbSource.getMongodbDatabaseName() + "." + metricQueryDef.getProperty("index");
 		
 			String onError = metricQueryDef.getProperty("onError");
-			if ( onError == null ) {
-				onError = projectErrorStrategy;
-			}
+			if ( onError == null ) onError = projectErrorStrategy;
 		
-			Metric m = new Metric(project, metric, evaluationDate, factors, weights, name, description, datasource, metricValue, info, onError );
+			Metric m = new Metric(project, metric, evaluationDate, null, null, null, name, description, datasource, metricValue, info, onError);
 			result.add(m);
 		}
 		
@@ -399,7 +432,7 @@ public class EvalProject {
 	 * @param metrics evaluations to be computed
 	 * @return List of Relation
 	 */
-	private List<Relation> computeMetricRelations( List<Metric> metrics ) {
+	/*private List<Relation> computeMetricRelations( List<Metric> metrics ) {
 		List<Relation> result = new ArrayList<>();
 		Map<String,Factor> factorMap = readFactorMap();
 		
@@ -424,7 +457,7 @@ public class EvalProject {
 		}
 
 		return result;
-	}
+	}*/
 
 	/**
 	 * Read Map of Factors (id->Factor) from factors.properties file
@@ -439,18 +472,17 @@ public class EvalProject {
 		for ( String f : factors ) {
 			Boolean enabled = Boolean.parseBoolean(  factorProperties.getProperty(f + ".enabled") );
 			String project = projectProperties.getProperty("project.name");
-			String[] indicators = getAsStringArray( factorProperties.getProperty(f + ".indicators") );
+			String[] metrics = getAsStringArray( factorProperties.getProperty(f + ".metrics") );
 			Double[] weights = getAsDoubleArray( factorProperties.getProperty(f + ".weights") );
 			String name = factorProperties.getProperty(f + ".name");
 			String description = factorProperties.getProperty(f + ".description");
+			String datasource = factorProperties.getProperty(f + ".datasource");
 
 			Double value = null;
 			String onError = factorProperties.getProperty(f + ".onError");
-			if ( onError == null ) {
-				onError = projectErrorStrategy;
-			}
+			if ( onError == null ) onError = projectErrorStrategy;
 
-			Factor fact = new Factor(enabled, project, f, evaluationDate, indicators, weights, name, description, null, value, null, onError );
+			Factor fact = new Factor(enabled, project, f, evaluationDate, metrics, weights, null, name, description, datasource, value, null, onError);
 			result.put(f, fact);
 		}
 		
@@ -481,7 +513,7 @@ public class EvalProject {
 				onError = projectErrorStrategy;
 			}
 
-			Indicator ind = new Indicator(enabled, project, i, evaluationDate, parents, weights, name, description, null, value, null, onError );
+			Indicator ind = new Indicator(enabled, project, i, evaluationDate, parents, weights, null, name, description, null, value, null, onError );
 			result.put(i, ind);
 		}
 		
@@ -518,6 +550,33 @@ public class EvalProject {
 			metric = metric.replaceAll( key, evalParameters.get(key).toString() );
 		double res = Evaluator.eval(metric);
 		return Math.min(res, 1.0);
+	}
+
+	/**
+	 * Evaluate entity value from their children values and weights
+	 * @param children names of the child entities
+	 * @param weights weights of those child entities
+	 * @param childrenValues evaluated values of each child entity
+	 * @return value of the evaluated entity
+	 */
+	private Double evaluate(String[] children, Double[] weights, Map<String, Double> childrenValues) {
+		double value = 0.0;
+		Double weight = 0.0;
+		boolean weighted = !Arrays.stream(weights).allMatch(val -> val.equals(-1.0));
+		if (!weighted) weight = (1.0 / children.length);
+		for (int i = 0; i < children.length; ++i) {
+			String childName = children[i];
+			if (weighted) {
+				if (weights.length > i) {
+					weight = weights[i];
+					if (weight == -1.0) weight = 0.0;
+				}
+				else weight = 0.0;
+			}
+			if (childrenValues.containsKey(childName))
+				value += childrenValues.get(childName) * weight;
+		}
+		return Math.min(value, 1.0);
 	}
 
 	/**

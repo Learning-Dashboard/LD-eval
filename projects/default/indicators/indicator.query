@@ -3,24 +3,13 @@
     $match: {
       "evaluationDate": "{{evaluationDate}}",
       "project": "{{project}}",
-      "targetType": "{{targetType}}",
-      "targetId": "{{targetId}}"
-    }
-  },
-  {
-    $group: {
-      _id: null,
-      values: { $sum: "$value" },
-      weights: { $sum: "$weight" },
-      numberOfMetrics: { $sum: 1 }
+      "factor": "{{factor}}"
     }
   },
   {
     $project: {
       _id: 0,
-      values: 1,
-      weights: 1,
-      numberOfMetrics: 1
+      value: "$value"
     }
   }
 ]

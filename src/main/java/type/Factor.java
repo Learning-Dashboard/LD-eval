@@ -7,43 +7,34 @@ import java.util.Map;
 
 public class Factor extends IndexItem {
 	
-	public Factor( 
-			
+	public Factor (
 			Boolean enabled,
 			String project,
 			String factor,
 			String evaluationDate,
-			
-			String [] indicators,
+			String [] metrics,
 			Double [] weights,
-			
+			String[] missingChildren,
 			String name, 
 			String description, 
 			String datasource,
 			Double value,
 			String info,
-			String onError
-			
-		) { 
+			String onError) {
 
 		this.enabled = enabled;
-		
 		this.project  = project;
 		this.id = factor;
 		this.evaluationDate = evaluationDate;
-		
-		this.parents = indicators;
+		this.children = metrics;
 		this.weights = weights;
-		
+		this.missingChildren = missingChildren;
 		this.name = name;
 		this.description = description;
 		this.datasource = datasource;
-		
 		this.value = value;
 		this.info = info;
-		
 		this.onError = onError;
-
 	}
 	
 	@Override
@@ -67,42 +58,32 @@ public class Factor extends IndexItem {
 		this.id = factor;
 	}
 
-	public String[] getIndicators() {
-		return parents;
+	public String[] getMetrics() {
+		return children;
 	}
 
-	public void setIndicators(String[] indicators) {
-		this.parents = indicators;
+	public void setMetrics(String[] metrics) {
+		this.children = metrics;
 	}
 
 	public Map<String, Object> getMap() {
 		Map<String, Object> result = new HashMap<>();
 		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
-		ArrayList<String> arrayListParents = new ArrayList<>(Arrays.asList(parents));
-		ArrayList<String> arrayListMetrics = new ArrayList<>();
+		ArrayList<String> arrayListChildren = new ArrayList<>(Arrays.asList(children));
+		ArrayList<String> arrayListMissingMetrics = new ArrayList<>(Arrays.asList(missingChildren));
 
 		result.put("project", project);
 		result.put("factor", id);
 		result.put("evaluationDate", evaluationDate);
-		
-		result.put("indicators", arrayListParents);
+		result.put("metrics", arrayListChildren);
 		result.put("weights", arrayListWeights);
-		
 		result.put("name", name);
 		result.put("description", description);
 		result.put("datasource", datasource);
-		
 		result.put("value", value);
 		result.put("info", info);
-
-		result.put("missing_metrics", arrayListMetrics);
-		result.put("dates_mismatch_days", 0);
-		
+		result.put("missing_metrics", arrayListMissingMetrics);
 		return result;
-		
 	}
-
-
-
 
 }

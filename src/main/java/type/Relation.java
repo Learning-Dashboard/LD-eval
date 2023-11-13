@@ -9,14 +9,14 @@ public class Relation extends IndexItem {
 	private IndexItem target;
 	private Double weight;
 
-	public Relation(
+	public Relation (
 			String project, 
 			IndexItem source, 
 			IndexItem target, 
 			String evaluationDate,
 			Double value,
-			Double weight
-		) {
+			Double weight) {
+
 		this.id = source.id + "->" + target.id;
 		this.project = project;
 		this.source = source;
@@ -28,23 +28,17 @@ public class Relation extends IndexItem {
 	
 	public Map<String, Object> getMap() {
 		Map<String, Object> result = new HashMap<>();
-
 		result.put("relation", getMongodbId());
 		result.put("evaluationDate", evaluationDate);
 		result.put("project", project);
-		
 		result.put("sourceType", source.getType());
 		result.put("sourceId", source.getMongodbId());
-		
 		result.put("targetType", target.getType());
 		result.put("targetId", target.getMongodbId());
-		
 		result.put("value", value);
 		result.put("weight", weight);
-
 		result.put("targetValue", null);
 		result.put("sourceLabel", null);
-
 		return result;
 	}
 	
@@ -88,6 +82,5 @@ public class Relation extends IndexItem {
 	public void setValue(Double value) {
 		this.value = value;
 	}
-
 
 }

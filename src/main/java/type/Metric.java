@@ -1,52 +1,42 @@
 package type;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Metric extends IndexItem {
 	
-	public Metric( 
-			
+	public Metric (
 			String project, 
 			String metric,
 			String evaluationDate,
-			
-			String[] factors,
+			String[] children,
 			Double[] weights,
-			String name, 
+			String[] missingChildren,
+			String name,
 			String description,
 			String datasource,
 			Double value,
 			String info,
-			String onError
-
-		) {
+			String onError) {
 
 		this.project = project;
 		this.id = metric;
 		this.evaluationDate = evaluationDate;
-		
-		this.parents = factors;
+		this.children = children;
 		this.weights = weights;
-		
+		this.missingChildren = missingChildren;
 		this.name = name;
 		this.description = description;
 		this.datasource = datasource;
-		
 		this.value = value;
 		this.info = info;
-		
 		this.onError = onError;
-
 	}
 	
 	@Override
 	public String getType() {
 		return "metrics";
 	}
-	
 
 	public String getMetric() {
 		return id;
@@ -56,36 +46,18 @@ public class Metric extends IndexItem {
 		this.id = metric;
 	}
 
-	public String[] getFactors() {
-		return parents;
-	}
-
-	public void setFactors(String[] factors) {
-		this.parents = factors;
-	}
-
 	public Map<String, Object> getMap() {
 		Map<String, Object> result = new HashMap<>();
-		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
-		ArrayList<String> arrayListParents = new ArrayList<>(Arrays.asList(parents));
-
 		result.put("type", getType() );
 		result.put("project", project);
 		result.put("metric", id);
-		
-		result.put("factors", arrayListParents);
-		result.put("weights", arrayListWeights);
-		
 		result.put("name", name);
 		result.put("description", description);
 		result.put("source", datasource);
 		result.put("value", value);
 		result.put("info", info);
-
 		result.put("evaluationDate", evaluationDate);
-
 		return result;
-		
 	}
 
 }

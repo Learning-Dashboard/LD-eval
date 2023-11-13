@@ -1,8 +1,6 @@
 package eval2;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 import type.Factor;
 import type.Indicator;
@@ -12,61 +10,63 @@ public class ModelChecker {
 	
 	public static void check(Map<String,QueryDef> metricQueries, Map<String, Factor> factorMap, Map<String, type.Indicator> indicatorMap) {
 		
-		Set<String> allInfluencedFactors = new HashSet<>();
-		
-		// Factors referenced in <metric>.properties are defined in factor.properties
-		for ( QueryDef qd : metricQueries.values() ) {
-			
-			if ( !qd.isEnabled() ) continue;
-			
-			String[] influencedFactors = qd.getPropertyAsStringArray("factors");
-			for ( String f : influencedFactors ) {
-				allInfluencedFactors.add(f);
-				if ( !factorMap.containsKey(f)) {
-					log.warning( "Factor " + f + " is influenced by Metric " + qd.getName() + " but not defined in factor.properties.\n" );
-				} else {
-					Factor fact = factorMap.get(f);
-					if ( !fact.isEnabled() ) {
-						log.warning( "Factor " + f + " is influenced by Metric " + qd.getName() + " but is not enabled in factor.properties.\n" );
+		// Metrics referenced in factor.properties that are defined in <metric>.properties
+		for (Factor f : factorMap.values()) {
+			if (!f.isEnabled()) continue;
+			String[] influencedMetrics = f.getMetrics();
+			for (String m : influencedMetrics) {
+				if (!metricQueries.containsKey(m)) {
+					log.warning("Metric " + m + " influences factor " + f.getFactor() + " but no " + m + ".properties file exists.\n");
+				}
+				else {
+					QueryDef qd = metricQueries.get(m);
+					if (!qd.isEnabled()) {
+						log.warning( "Metric " + m + " influences factor " + f.getFactor() + " but is not enabled in " + m + ".properties.\n");
 					}
 				}
 			}
 		}
-		
-		// for each factor defined in factor.properties
-		// check, that it is influenced by a metric (factor is listed under 'factors' in metric.properties)
-		for ( String f : factorMap.keySet() ) {
-			
-			if ( !factorMap.get(f).isEnabled() ) continue;
-			
-			if ( !allInfluencedFactors.contains(f) ) {
-				log.warning("Factor " + f + " is defined in factor.properties but not influenced by any Metric.\n");
-			}
-		}
-		
-		// indicators referenced in factor.properties are defined in indicator.properties
-		Set<String> allinfluencedIndicators = new HashSet<>();
+
+		// For each Factor defined in factor.properties, check that it is influenced by a Metric
+		// Also check that each Metric has its corresponding weight, and vice versa
 		for ( Factor f : factorMap.values() ) {
 			if ( !f.isEnabled() ) continue;
-			for ( String i : f.getIndicators() ) {
-				allinfluencedIndicators.add(i);
-				if ( !indicatorMap.containsKey(i) ) {
-					log.warning("Indicator " + i + " is influenced by Factor " + f.getFactor() + " but not defined in indicator.properties.\n");
+			if (f.getMetrics() == null ||  f.getMetrics().length == 0) {
+				log.warning("Factor " + f.getFactor() + " is defined in factor.properties but not influenced by any metric defined in <metric>.properties.\n");
+			}
+			if (f.getMetrics().length != f.getWeights().length) {
+				log.warning("The number of metrics that influence factor " + f.getFactor() + " (" +
+					f.getMetrics().length + ") does not match its number of metric weights (" +
+					f.getWeights().length + ").\n");
+			}
+		}
+		
+		// Factors referenced in indicator.properties that are defined in factor.properties
+		for ( Indicator i : indicatorMap.values() ) {
+			if ( !i.isEnabled() ) continue;
+			String[] influencedFactors = i.getFactors();
+			for ( String f : influencedFactors ) {
+				if ( !factorMap.containsKey(f) ) {
+					log.warning("Factor " + f + " influences indicator " + i.getIndicator() + " but not defined in factor.properties.\n");
 				} else {
-					if ( !indicatorMap.get(i).isEnabled() ) {
-						log.warning( "Indicator " + i + " is influenced by Factor " + f.getFactor() + " but is not enabled in indicator.properties.\n" );
+					if ( !factorMap.get(f).isEnabled() ) {
+						log.warning( "Factor " + f + " influences indicator " + i.getIndicator() + " but is not enabled in factor.properties.\n" );
 					}
 				}
 			}
 		}
 		
-		// for each indicator defined in indicator.properties
-		// check, that it is influenced by a factor (indicator is listed under 'indicators' in factor.properties)
-		for ( String i : indicatorMap.keySet() ) {
-			if ( !indicatorMap.get(i).isEnabled() ) continue;
-			
-			if ( !allinfluencedIndicators.contains(i) ) {
-				log.warning("Indicator " + i + " is defined in indicator.properties but not influenced by any Factor defined in factor.properties.\n");
+		// For each Indicator defined in indicator.properties check that it is influenced by a Factor
+		// Also check that each Factor has its corresponding weight, and vice versa
+		for ( Indicator i : indicatorMap.values() ) {
+			if ( !i.isEnabled() ) continue;
+			if ( i.getFactors() == null || i.getFactors().length == 0 ) {
+				log.warning("Indicator " + i.getIndicator() + " is defined in indicator.properties but not influenced by any factor defined in factor.properties.\n");
+			}
+			if (i.getFactors().length != i.getWeights().length) {
+				log.warning("The number of factors that influence indicator " + i.getIndicator() + " (" +
+						i.getFactors().length + ") does not match its number of metric weights (" +
+						i.getWeights().length + ").\n");
 			}
 		}
 		
