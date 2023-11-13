@@ -1,5 +1,5 @@
 # Learning-Dashboard eval ![](https://img.shields.io/badge/License-Apache2.0-blue.svg)
-LD-eval computes metrics, factors, and indicators on raw data stored in a MongoDB database. In the Learning Dasboard context, raw data is produced by a series of Kafka connectors (which read from Taiga, Github and other sources). Learning-Dashboard eval aggregates the raw data into metrics, and further on into factors and indicators, according to a defined quality model.
+LD-eval computes metrics, factors, and indicators on raw data stored in a MongoDB database. In the Learning Dashboard context, raw data is produced by a series of Kafka connectors (which read from Taiga, Github and other sources). Learning-Dashboard eval aggregates the raw data into metrics, and further on into factors and indicators, according to a defined quality model.
 
 ## Configuration
 Learning-Dashboard eval is a commandline tool and is configured via a set of text files (.query and .properties) that are stored in a special folder structure. The top-folder is named 'projects'. 
@@ -330,7 +330,7 @@ DON'T TOUCH, unless you know what you are doing.
   
 * Java 1.8 is installed.
   
-* A projects folder exists in the directory of LD-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
+* A projects folder exists in the directory of LD-eval-\<version\>-jar-with-dependencies.jar and contains a proper quality model configuration.
 
 ### Run without commandline parameters
 The date of the current day (format yyyy-MM-dd) will be available as parameter 'evaluationDate' in params and metrics queries.
@@ -360,7 +360,7 @@ mvn package assembly:single
 After build, you'll find the generated jar in the target folder.
 
 ## Model validation
-Before the evaluation of a project starts, LD-eval performs a basic evaluation of the qualtity model. A warning is logged in the following cases:
+Before the evaluation of a project starts, LD-eval performs a basic evaluation of the quality model. A warning is logged in the following cases:
 
 + A metrics-query mentions a factor in the factors-property, but the factor isn't defined in the factors.properties file.
 
