@@ -107,11 +107,9 @@ public class EvalProject {
 		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, metricrelations);
 
-		/*
 		List<Relation> factorrelations = computeIndicatorFactorsRelations(factors, indicators);
 		log.info("Storing factors relations (" + factorrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, factorrelations);
-		 */
 	}
 	
 
@@ -231,35 +229,34 @@ public class EvalProject {
 	
 	/**
 	 * Compute Relations between Factors and Indicators
-	 * @param factors factor evaluations to be computed (as source)
-	 * @param indicators indicator evaluations to be computed (as target)
+	 * @param factorsCollection factor evaluations to be computed (as source)
+	 * @param indicatorsCollection indicator evaluations to be computed (as target)
 	 * @return List of Relation
 	 */
-	/*private List<Relation> computeIndicatorFactorsRelations(Collection<Factor> factors, Collection<Indicator> indicators) {
+	private List<Relation> computeIndicatorFactorsRelations(Collection<Factor> factorsCollection, Collection<Indicator> indicatorsCollection) {
 		List<Relation> result = new ArrayList<>();
-		Map<String,Indicator> indicatorMap = readIndicatorMap();
+		List<Factor> factors = new ArrayList<>(factorsCollection);
+		List<Indicator> indicators = new ArrayList<>(indicatorsCollection);
 		
-		for ( Factor factor : factors ) {
-			for ( int i = 0; i < factor.getIndicators().length; i++ ) {
-				String indicatorid = factor.getIndicators()[i];
-				Double weight = factor.getWeights()[i];
-				Indicator indicator = indicatorMap.get(indicatorid);
-				
-				if ( indicator == null ) {
-					log.info( "Warning: Impact of Factor " + factor.getName() + " on undefined Indicator " + indicatorid + "is not stored."  );
-				} else {
-					if ( !indicator.isEnabled() ) {
-						log.info("Indicator " + indicator.getName() + " is disabled. No relation created.\n");
-						continue;
-					}
-					Relation imp = new Relation(factor.getProject(), factor, indicator, evaluationDate, factor.getValue() * weight, weight);
+		for (Indicator indicator : indicators) {
+			for (int i = 0; i < indicator.getFactors().length; ++i) {
+				String factorId = indicator.getFactors()[i];
+				Double weight = indicator.getWeights()[i];
+				Factor factor = null;
+				for (Factor f : factors)
+					if (Objects.equals(f.getFactor(), factorId)) factor = f;
+
+				if (factor == null)
+					log.info("WARNING: Impact of undefined or disabled factor " + factorId + "on indicator " + indicator.getIndicator() + " is not stored.");
+				else {
+					Relation imp = new Relation(indicator.getProject(), factor, indicator, evaluationDate, factor.getValue() * weight, weight);
 					result.add(imp);
 				}
 			}
 		}
 
 		return result;
-	}*/
+	}
 	
 	/**
 	 * Compute Indicator values based on Factor-indicator relations
@@ -489,9 +486,9 @@ public class EvalProject {
 					if (Objects.equals(m.getMetric(), metricId)) metric = m;
 
 				if (metric == null)
-					log.info( "WARNING: Impact of undefined or disabled metric " + metricId + " on factor " + factor.getFactor() + " is not stored."  );
+					log.info("WARNING: Impact of undefined or disabled metric " + metricId + " on factor " + factor.getFactor() + " is not stored.");
 				else {
-					Relation imp = new Relation(metric.getProject(), metric, factor, evaluationDate, metric.getValue() * weight, weight);
+					Relation imp = new Relation(factor.getProject(), metric, factor, evaluationDate, metric.getValue() * weight, weight);
 					result.add(imp);
 				}
 			}
