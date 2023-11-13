@@ -1,5 +1,5 @@
 # Learning-Dashboard eval ![](https://img.shields.io/badge/License-Apache2.0-blue.svg)
-LD-eval computes metrics, factors, and indicators on raw data stored in a MongoDB database. In the Learning Dasboard context, raw data is produced by a series of Kafka connectors (which read from Taiga, Github and other sources). Learning-Dashboard eval aggregates the raw data into metrics, and further on into factors and indicators, according to a defined quality model.
+LD-eval computes metrics, factors, and indicators on raw data stored in a MongoDB database. In the Learning Dashboard context, raw data is produced by a series of Kafka connectors (which read from Taiga, Github and other sources). Learning-Dashboard eval aggregates the raw data into metrics, and further on into factors and indicators, according to a defined quality model.
 
 ## Configuration
 Learning-Dashboard eval is a commandline tool and is configured via a set of text files (.query and .properties) that are stored in a special folder structure. The top-folder is named 'projects'. 
@@ -14,12 +14,12 @@ The folder structure shown below defines the evaluation of one project named 'de
     +---default
     |   |
     |   +---factors
-    |   |     factor1.properties
-    |   |     factor1.query
+    |   |     factor.properties
+    |   |     factor.query
     |   |
     |   +---indicators
-    |   |     indicator1.properties
-    |   |     indicator1.query
+    |   |     indicator.properties
+    |   |     indicator.query
     |   |
     |   +---metrics
     |   |     metric1.properties
@@ -45,7 +45,7 @@ The folder structure shown below defines the evaluation of one project named 'de
 
 ### projects/eval.properties
 
-The *eval.properties* file defines global configuration options. Currently, only the url for notifying the dashboard about a new evaluation is contained:
+The *eval.properties* file defines global configuration options. Currently, only the url for notifying the dashboard about a new evaluation is:
 
 ```
 dashboard.notification.url=http://<address>/api/strategicIndicators/assess
@@ -174,8 +174,6 @@ Search templates can receive parameters ( noted with double curly braces: {{para
 ### projects/default/metrics
 The folder contains the metrics definitions of a project. As *params queries*, *metrics queries* consist of a pair of files, a .properties and a .query file. In addition to params queries, metrics queries compute a metric value defined by a formula. The computed metric value is stored in the metrics index (defined in *project.properties*) after the query execution.
 
-Computed metrics get aggregated into factors. Therefore, you have to specify the factors, a metric is going to influence. Metrics can influence one or more factors, that are supplied as a comma-separated list of factor IDs together with the weight describing the strength of the influence. In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
-
 __Example: metric1 query__
 
 metric1.properties
@@ -188,8 +186,6 @@ index=$$taiga.task.index
 enabled=true
 name=Metric 1
 description=Description of metric 1
-factors=factor1,factor2
-weights=0.5,1.0
 
 # query parameters
 param.milestone=false
@@ -275,35 +271,68 @@ metric= tasksUnassigned / tasksTotal = 12 / 158 = 7.59%
 ```
 
 ### projects/default/factors.properties
-The factors.properties file defines factors to compute along with their properties. Factors don't do sophisticated computations, they serve as a point for the aggregation of metric values. Factors are then aggregated into indicators, so they have to specify the indicators they are influencing along with the weights of the influence. The notation used has to be read as *factorid.property=value*. 
+The factors.properties file defines factors to compute along with their properties. Factors don't do sophisticated computations, they serve as a point for the aggregation of metric values. The notation used has to be read as *factorid.property=value*. 
+
+Factors are computed as an aggregation of metrics. Therefore, you have to specify for each factor, the metrics that influence it. Factors can be influenced by one or more metrics, that are supplied as a comma-separated list of metric IDs together with the weight describing the strength of the influence. 
+
+In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. Moreover, the metric 'metric2' only influences the factor 'factor1' with a weight of 0.5.
+The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
 
 + The *enabled* attribute enables/disables a factor (no records written for a factor when disabled).
   
 + The *name* property supplies a user-friendly name of a factor.
   
-+ The *decription* attribute describes the intention of the factor.
-  
-+ The *indicators* attribute contains a list of influenced indicators (which are defined in a separate properties file).
-  
-+ The *weights* attribute sets the strength of the influence. Obviously, the lists in 'indicators' and 'weights' have to have the same length!
-  
-+ The *onError* attribute tells qr-eval what to do in case of factor computation errors (e.g. no metrics influence a factor, which results in a division by zero).
++ The *description* attribute describes the intention of the factor.
 
-Example of factor definition (factor1):
++ The *datasource* attribute describes the source of the metrics' data that compose the factor (Github, Taiga or PTR).
+  
++ The *metrics* attribute contains a list of metrics that influence the factor (which are defined in their respective properties file).
+  
++ The *weights* attribute sets the strength of the influence. Obviously, the lists in 'metrics' and 'weights' have to have the same length! If all the metrics have the same weight for a factor, then the weights can be expressed as -1.0 (having as many -1.0 as metrics are in the 'metrics' list).
+  
++ The *onError* attribute tells LD-eval what to do in case of factor computation errors (e.g. no metrics influence a factor, which results in a division by zero).
+
+Example of factor definition:
 
 ```properties
 factor1.enabled=true
 factor1.name=Factor 1
 factor1.description=Factor 1 description
-factor1.indicators=indicator1
-factor1.weights=1.0
+factor1.datasource=Github
+factor1.metrics=metric1,metric2
+factor1.weights=0.5,0.5
 factor1.onError=set0
+
+factor2.enabled=true
+factor2.name=Factor 2
+factor2.description=Factor 2 description
+factor2.datasource=Github
+factor2.metrics=metric1
+factor2.weights=1.0
+factor2.onError=set0
 ```
 
 __Note:__ The onError property can be set to 'drop' or 'set0' and overwrites to setting in project.properties.
 
 ### projects/default/indicators.properties
-The indicators.properties file defines the strategic indicators for a project. The parents and weights attribute currently have no effect, but could define an additional level of aggregation in the future. 
+The indicators.properties file defines the strategic indicators for a project. Indicators don't do sophisticated computations, they serve as a point for the aggregation of factor values. The notation used has to be read as *indicatorid.property=value*.
+
+Indicators are computed as an aggregation of factors. Therefore, you have to specify for each indicator, the factors that influence it, in the same way as factors and metrics. 
+The value of an indicator is then computed as a weighted sum of all factors influencing an indicator.
+
++ The *enabled* attribute enables/disables an indicator (no records written for an indicator when disabled).
+
++ The *name* property supplies a user-friendly name of an indicator.
+
++ The *description* attribute describes the intention of the indicator.
+
++ The *factors* attribute contains a list of factors that influence the indicator (which are defined in the separate factors.properties file).
+
++ The *weights* attribute sets the strength of the influence. Obviously, the lists in 'factors' and 'weights' have to have the same length!
+  If all the factors have the same weight for an indicator, then the weights can be expressed as -1.0 (having as many -1.0 as factors are in the 'factors' list).
+
++ The *onError* attribute tells LD-eval what to do in case of indicator computation errors (e.g. no factors influence an indicator, which results in a division by zero).
+
 
 Example of strategic indicator definition (indicator1):
 
@@ -311,16 +340,16 @@ Example of strategic indicator definition (indicator1):
 indicator1.enabled=true
 indicator1.name=Indicator 1
 indicator1.description=Indicator 1 description
-indicator1.parents=meta
-indicator1.weights=1.0
+indicator1.factors=factor1,factor2
+indicator1.weights=-1.0,-1.0
 ```
 
 ### projects/default/factors
-Defines the query for aggregation of metrics into factors, based on relations index. 
+Defines the query for aggregation of metrics into factors, based on metrics index. 
 DON'T TOUCH, unless you know what you are doing.
 
 ### projects/default/indicators
-Defines the query for aggregation of factors into indicators, based on relations index. 
+Defines the query for aggregation of factors into indicators, based on factors index. 
 DON'T TOUCH, unless you know what you are doing.
 
 ## Running LD-eval
@@ -330,7 +359,7 @@ DON'T TOUCH, unless you know what you are doing.
   
 * Java 1.8 is installed.
   
-* A project's folder exists in the directory of LD-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
+* A project's folder exists in the directory of LD-eval-\<version\>-jar-with-dependencies.jar and contains a proper quality model configuration.
 
 ### Run without commandline parameters
 The date of the current day (format yyyy-MM-dd) will be available as parameter 'evaluationDate' in params and metrics queries.
@@ -340,7 +369,7 @@ java -jar LD-eval-<version>-jar-with-dependencies.jar
 ```
 
 ### Specify a single evaluation date
-The specified evaluationDate will be available as parameter 'evaluationDate' in params and metrics  queries.
+The specified evaluationDate will be available as parameter 'evaluationDate' in params and metrics queries.
 
 ```
 java -jar LD-eval-<version>-jar-with-dependencies.jar evaluationDate 2019-03-01
@@ -360,19 +389,19 @@ mvn package assembly:single
 After build, you'll find the generated jar in the target folder.
 
 ## Model validation
-Before the evaluation of a project starts, LD-eval performs a basic evaluation of the qualtity model. A warning is logged in the following cases:
+Before the evaluation of a project starts, LD-eval performs a basic evaluation of the quality model. A warning is logged in the following cases:
 
-+ A metrics-query mentions a factor in the factors-property, but the factor isn't defined in the factors.properties file.
++ A factor mentions a metric in the factors.properties file, but the metric isn't defined in the \<metric\>.properties file.
 
-+ A factor mentioned in a metric is not enabled.
++ A factor is influenced by a metric which is not enabled.
 
-+ A factor is defined in factors.properties, but not mentioned in any metrics-query.
++ A factor is defined in factors.properties, but not influenced by any metric.
 
-+ An indicator is mentioned in the indicators-property of a defined factor, but is not defined in the indicators.properties file.
++ An indicator mentions a factor in the indicators.properties file, but the factor isn't defined in the factors.properties file.
 
-+ An indicator is mentioned in the indicators-property of a defined factor, but is not enabled.
++ An indicator is influenced by a factor which is not enabled.
 
-+ An indicator is defined in indicators.properties, but it is not mentioned in any indicators-property of the defined factors.
++ An indicator is defined in indicators.properties, but not influenced by any factor.
 
 
 ## Built With
