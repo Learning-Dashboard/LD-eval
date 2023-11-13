@@ -103,12 +103,12 @@ public class EvalProject {
 		log.info("Storing indicators (" + factors.size() + " computed)\n");
 		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
 
-		/*
-		List<Relation> metricrelations = computeMetricRelations(metrics);
+		List<Relation> metricrelations = computeFactorMetricsRelations(metrics, factors);
 		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, metricrelations);
 
-		List<Relation> factorrelations = computeFactorRelations(factors);
+		/*
+		List<Relation> factorrelations = computeIndicatorFactorsRelations(factors, indicators);
 		log.info("Storing factors relations (" + factorrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, factorrelations);
 		 */
@@ -231,10 +231,11 @@ public class EvalProject {
 	
 	/**
 	 * Compute Relations between Factors and Indicators
-	 * @param factors evaluations to be computed
+	 * @param factors factor evaluations to be computed (as source)
+	 * @param indicators indicator evaluations to be computed (as target)
 	 * @return List of Relation
 	 */
-	/*private List<Relation> computeFactorRelations( Collection<Factor> factors ) {
+	/*private List<Relation> computeIndicatorFactorsRelations(Collection<Factor> factors, Collection<Indicator> indicators) {
 		List<Relation> result = new ArrayList<>();
 		Map<String,Indicator> indicatorMap = readIndicatorMap();
 		
@@ -471,27 +472,25 @@ public class EvalProject {
 	
 	/**
 	 * Compute relations between (enabled) Metrics and Factors
-	 * @param metrics evaluations to be computed
+	 * @param metrics metric evaluations to be computed (as source)
+	 * @param factorsCollection factor evaluations to be computed (as target)
 	 * @return List of Relation
 	 */
-	/*private List<Relation> computeMetricRelations( List<Metric> metrics ) {
+	private List<Relation> computeFactorMetricsRelations(List<Metric> metrics, Collection<Factor> factorsCollection) {
 		List<Relation> result = new ArrayList<>();
-		Map<String,Factor> factorMap = readFactorMap();
-		
-		for ( Metric metric : metrics ) {
-			for ( int i = 0; i < metric.getFactors().length; i++ ) {
-				
-				String factorId = metric.getFactors()[i];
-				Double weight = metric.getWeights()[i];
-				Factor factor = factorMap.get(factorId);
-				
-				if ( factor == null ) {
-					log.info( "Warning: Impact of Metric " + metric.getName() + " on undefined Factor " + factor + "is not stored."  );
-				} else {
-					if ( !factor.isEnabled() ) {
-						log.info("Factor " + factor.getName() + " is disabled. No relation created.\n");
-						continue;
-					}
+		List<Factor> factors = new ArrayList<>(factorsCollection);
+
+		for (Factor factor : factors) {
+			for (int i = 0; i < factor.getMetrics().length; ++i) {
+				String metricId = factor.getMetrics()[i];
+				Double weight = factor.getWeights()[i];
+				Metric metric = null;
+				for (Metric m : metrics)
+					if (Objects.equals(m.getMetric(), metricId)) metric = m;
+
+				if (metric == null)
+					log.info( "WARNING: Impact of undefined or disabled metric " + metricId + " on factor " + factor.getFactor() + " is not stored."  );
+				else {
 					Relation imp = new Relation(metric.getProject(), metric, factor, evaluationDate, metric.getValue() * weight, weight);
 					result.add(imp);
 				}
@@ -499,7 +498,7 @@ public class EvalProject {
 		}
 
 		return result;
-	}*/
+	}
 
 	/**
 	 * Read Map of Factors (id->Factor) from factors.properties file

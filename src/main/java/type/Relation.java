@@ -37,8 +37,7 @@ public class Relation extends IndexItem {
 		result.put("targetId", target.getMongodbId());
 		result.put("value", value);
 		result.put("weight", weight);
-		result.put("targetValue", null);
-		result.put("sourceLabel", null);
+		result.put("targetValue", target.getValue());
 		return result;
 	}
 	

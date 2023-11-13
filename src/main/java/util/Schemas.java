@@ -81,7 +81,7 @@ public class Schemas {
 
     public static final Document RELATIONS_SCHEMA = new Document("$jsonSchema", new Document()
         .append("bsonType", "object")
-        .append("required", Arrays.asList("_id", "project", "relation", "evaluationDate", "sourceId", "sourceType", "targetId", "targetType", "value", "weight", "targetValue", "sourceLabel"))
+        .append("required", Arrays.asList("_id", "project", "relation", "evaluationDate", "sourceId", "sourceType", "targetId", "targetType", "value", "weight", "targetValue"))
         .append("properties", new Document()
             .append("_id", new Document("bsonType", Arrays.asList("objectId", "string")))
             .append("project", new Document("bsonType", Arrays.asList("string", "null")))
@@ -94,7 +94,6 @@ public class Schemas {
             .append("value", new Document("bsonType", Arrays.asList("double", "int", "null")))
             .append("weight", new Document("bsonType", Arrays.asList("double", "int", "null")))
             .append("targetValue", new Document("bsonType", Arrays.asList("string", "null")))
-            .append("sourceLabel", new Document("bsonType", Arrays.asList("string", "null")))
         )
     );
 
