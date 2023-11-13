@@ -100,7 +100,7 @@ public class EvalProject {
 
 		log.info("Computing Indicators...\n");
 		Collection<Indicator> indicators = computeIndicators();
-		log.info("Storing indicators (" + factors.size() + " computed)\n");
+		log.info("Storing indicators (" + indicators.size() + " computed)\n");
 		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
 
 		List<Relation> metricrelations = computeFactorMetricsRelations(metrics, factors);
@@ -239,15 +239,28 @@ public class EvalProject {
 		List<Indicator> indicators = new ArrayList<>(indicatorsCollection);
 		
 		for (Indicator indicator : indicators) {
+			boolean nonWeighted = Arrays.asList(indicator.getWeights()).contains(-1.0);
+			boolean someNonWeighted = Arrays.stream(indicator.getWeights()).anyMatch(val -> !val.equals(-1.0));
+			if (indicator.getFactors().length != indicator.getWeights().length) {
+				log.info("WARNING: Indicator " + indicator.getIndicator() + " relations won't be computed. " +
+						"Factors and weights arrays must be the same length.\n");
+				continue;
+			}
+			if (nonWeighted && someNonWeighted) {
+				log.info("WARNING: Indicator " + indicator.getIndicator() + " relations won't be computed. " +
+						"Weights arrays must be fully weighted or fully non weighted.\n");
+				continue;
+			}
 			for (int i = 0; i < indicator.getFactors().length; ++i) {
 				String factorId = indicator.getFactors()[i];
 				Double weight = indicator.getWeights()[i];
+				if (weight == -1.0) weight = (1.0 / indicator.getFactors().length);
 				Factor factor = null;
 				for (Factor f : factors)
 					if (Objects.equals(f.getFactor(), factorId)) factor = f;
 
 				if (factor == null)
-					log.info("WARNING: Impact of undefined or disabled factor " + factorId + "on indicator " + indicator.getIndicator() + " is not stored.");
+					log.info("WARNING: Impact of undefined or disabled factor " + factorId + " on indicator " + indicator.getIndicator() + " is not stored.\n");
 				else {
 					Relation imp = new Relation(indicator.getProject(), factor, indicator, evaluationDate, factor.getValue() * weight, weight);
 					result.add(imp);
@@ -478,15 +491,28 @@ public class EvalProject {
 		List<Factor> factors = new ArrayList<>(factorsCollection);
 
 		for (Factor factor : factors) {
+			boolean nonWeighted = Arrays.asList(factor.getWeights()).contains(-1.0);
+			boolean someNonWeighted = Arrays.stream(factor.getWeights()).anyMatch(val -> !val.equals(-1.0));
+			if (factor.getMetrics().length != factor.getWeights().length) {
+				log.info("WARNING: Factor " + factor.getFactor() + " relations won't be computed. " +
+						"Metrics and weights arrays must be the same length.\n");
+				continue;
+			}
+			if (nonWeighted && someNonWeighted) {
+				log.info("WARNING: Factor " + factor.getFactor() + " relations won't be computed. " +
+						"Weights arrays must be fully weighted or fully non weighted.\n");
+				continue;
+			}
 			for (int i = 0; i < factor.getMetrics().length; ++i) {
 				String metricId = factor.getMetrics()[i];
 				Double weight = factor.getWeights()[i];
+				if (weight == -1.0) weight = (1.0 / factor.getMetrics().length);
 				Metric metric = null;
 				for (Metric m : metrics)
 					if (Objects.equals(m.getMetric(), metricId)) metric = m;
 
 				if (metric == null)
-					log.info("WARNING: Impact of undefined or disabled metric " + metricId + " on factor " + factor.getFactor() + " is not stored.");
+					log.info("WARNING: Impact of undefined or disabled metric " + metricId + " on factor " + factor.getFactor() + " is not stored.\n");
 				else {
 					Relation imp = new Relation(factor.getProject(), metric, factor, evaluationDate, metric.getValue() * weight, weight);
 					result.add(imp);

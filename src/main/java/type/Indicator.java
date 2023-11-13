@@ -67,7 +67,7 @@ public class Indicator extends IndexItem {
 		Map<String, Object> result = new HashMap<>();
 		ArrayList<Double> arrayListWeights = new ArrayList<>(Arrays.asList(weights));
 		ArrayList<String> arrayListChildren = new ArrayList<>(Arrays.asList(children));
-		ArrayList<String> arrayListMissingFactors = new ArrayList<>();
+		ArrayList<String> arrayListMissingFactors = new ArrayList<>(Arrays.asList(missingChildren));
 
 		result.put("project", project);
 		result.put("strategic_indicator", id);

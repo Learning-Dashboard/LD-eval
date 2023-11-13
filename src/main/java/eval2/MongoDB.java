@@ -190,8 +190,10 @@ public class MongoDB {
         log.info("deleted " + deletedMetrics + " metrics (evaluationDate=" + evaluationDate + ").");
         log.info("deleted " + deletedRelations + " relations (evaluationDate=" + evaluationDate + ").\n");
 
-        BulkWriteResult br = writeBulk(metricIndex, metrics);
-        log.info(bulkResponseCheck(br));
+        if (metrics != null && !metrics.isEmpty()) {
+            BulkWriteResult br = writeBulk(metricIndex, metrics);
+            log.info(bulkResponseCheck(br));
+        }
     }
 
     public void storeRelations(Properties projectProperties, Collection<Relation> relations) {
@@ -199,8 +201,10 @@ public class MongoDB {
         String relationsIndex = projectProperties.getProperty("relations.index") + "." + projectName;
         checkCreateIndex(relationsIndex, Schemas.RELATIONS_SCHEMA);
 
-        BulkWriteResult br = writeBulk(relationsIndex, relations);
-        log.info(bulkResponseCheck(br));
+        if (relations != null && !relations.isEmpty()) {
+            BulkWriteResult br = writeBulk(relationsIndex, relations);
+            log.info(bulkResponseCheck(br));
+        }
     }
 
     public void storeFactors(Properties projectProperties, String evaluationDate, Collection<Factor> factors ) {
@@ -211,8 +215,10 @@ public class MongoDB {
         long deleted = deleteCurrentEvaluation(factorsIndex, projectName, evaluationDate);
         log.info("deleted " + deleted + " factors (evaluationDate=" + evaluationDate + ").\n");
 
-        BulkWriteResult br = writeBulk(factorsIndex, factors);
-        log.info(bulkResponseCheck(br));
+        if (factors != null && !factors.isEmpty()) {
+            BulkWriteResult br = writeBulk(factorsIndex, factors);
+            log.info(bulkResponseCheck(br));
+        }
     }
 
     public void storeIndicators(Properties projectProperties, String evaluationDate, Collection<Indicator> indicators) {
@@ -223,8 +229,10 @@ public class MongoDB {
         long deleted = deleteCurrentEvaluation(indicatorsIndex, projectName, evaluationDate);
         log.info("deleted " + deleted + " indicators (evaluationDate=" + evaluationDate + ").\n");
 
-        BulkWriteResult br = writeBulk(indicatorsIndex, indicators);
-        log.info(bulkResponseCheck(br));
+        if (indicators != null && !indicators.isEmpty()) {
+            BulkWriteResult br = writeBulk(indicatorsIndex, indicators);
+            log.info(bulkResponseCheck(br));
+        }
     }
 
     private void checkCreateIndex(String indexName, Document schemaPathname) {

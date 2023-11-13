@@ -131,7 +131,7 @@ result.issuesTotal=issuesTotal
 
 ### projects/default/params
 In the first phase of a project evaluation, LD-eval executes the queries in the params folder (*params queries*). 
-These do not compute metrics or factors, but allow for querying other arbitrary values (noted with prefix 'result.', which then can be used in subsequent *params* and *metrics* queries as parameters. 
+These do not compute metrics or factors, but allow for querying other arbitrary values (noted with prefix 'result.'), which then can be used in subsequent *params* and *metrics* queries as parameters. 
 The results of params queries can be used in subsequent params and metrics queries without declaration in the associated property-files (unlike values of project.properties, where declaration is necessary).
 
 The *params* queries are executed in sequence (alphabetical order). For this reason, it is a good practice to follow the suggested naming scheme for parameter queries and start the name of with a sequence of numbers (e.g. 01_query_name, 02_other_name). Since params queries build on each other, a proper ordering is necessary.
@@ -167,14 +167,14 @@ Search templates can receive parameters ( noted with double curly braces: {{para
   
 + Elements of the *project.properties* can be declared as a parameter with the $$ notation, as seen above (param.bcKey).
   
-+ Literals (numbers and strings) can be used after declaration as parameters (e.g by *param.myThreshold=15*).
++ Literals (numbers and strings) can be used after declaration as parameters (e.g. by *param.myThreshold=15*).
   
 + Results (noted with prefix 'result.') of *params queries* can be used as parameters in succeeding *params* and *metrics* queries without declaration.
 
 ### projects/default/metrics
 The folder contains the metrics definitions of a project. As *params queries*, *metrics queries* consist of a pair of files, a .properties and a .query file. In addition to params queries, metrics queries compute a metric value defined by a formula. The computed metric value is stored in the metrics index (defined in *project.properties*) after the query execution.
 
-Computed metrics get aggregated into factors. Therefore you have to specify the factors, a metric is going to influence. Metrics can influence one or more factors, that are supplied as a comma-separated list of factor IDs together with the weight describing the strength of the influence. In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
+Computed metrics get aggregated into factors. Therefore, you have to specify the factors, a metric is going to influence. Metrics can influence one or more factors, that are supplied as a comma-separated list of factor IDs together with the weight describing the strength of the influence. In the example below, the metric 'metric1' influences two factors (factor1 and factor2) with weights 0.5 for factor1 and 1.0 for factor2. The value of a factor is then computed as a weighted sum of all metrics influencing a factor.
 
 __Example: metric1 query__
 
@@ -253,7 +253,7 @@ The metric1 query is based on an aggregation query to derive its results, divide
 
 - Next, we can see the group stage. Here, do not group the documents by any field (we could, using the '_id' variable), and we create two new variables. In each of them, we apply an operation over the grouped documents.
   
-  - In the first one (tasksTotal) we simply count all of the grouped documents.
+  - In the first one (tasksTotal) we simply count all the grouped documents.
     
   - In the second one (tasksUnassigned) we count the number of grouped documents that follow a specific condition. In this case, the condition is for a field to be null.
 
@@ -303,7 +303,7 @@ factor1.onError=set0
 __Note:__ The onError property can be set to 'drop' or 'set0' and overwrites to setting in project.properties.
 
 ### projects/default/indicators.properties
-The indicators.properties file defines the strategic indicators for a project. The parents and weights attribute currently have no effect, but could define an additional level of aggregation in future. 
+The indicators.properties file defines the strategic indicators for a project. The parents and weights attribute currently have no effect, but could define an additional level of aggregation in the future. 
 
 Example of strategic indicator definition (indicator1):
 
@@ -330,7 +330,7 @@ DON'T TOUCH, unless you know what you are doing.
   
 * Java 1.8 is installed.
   
-* A projects folder exists in the directory of LD-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
+* A project's folder exists in the directory of LD-eval-\<version\>-jar-with-dependecies.jar and contains a proper quality model configuration.
 
 ### Run without commandline parameters
 The date of the current day (format yyyy-MM-dd) will be available as parameter 'evaluationDate' in params and metrics queries.
