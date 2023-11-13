@@ -47,7 +47,7 @@ public class ModelChecker {
 			String[] influencedFactors = i.getFactors();
 			for ( String f : influencedFactors ) {
 				if ( !factorMap.containsKey(f) ) {
-					log.warning("Factor " + f + " influences indicator " + i.getIndicator() + " but not defined in factor.properties.\n");
+					log.warning("Factor " + f + " influences indicator " + i.getIndicator() + " but is not defined in factor.properties.\n");
 				} else {
 					if ( !factorMap.get(f).isEnabled() ) {
 						log.warning( "Factor " + f + " influences indicator " + i.getIndicator() + " but is not enabled in factor.properties.\n" );
@@ -65,7 +65,7 @@ public class ModelChecker {
 			}
 			if (i.getFactors().length != i.getWeights().length) {
 				log.warning("The number of factors that influence indicator " + i.getIndicator() + " (" +
-						i.getFactors().length + ") does not match its number of metric weights (" +
+						i.getFactors().length + ") does not match its number of factor weights (" +
 						i.getWeights().length + ").\n");
 			}
 		}

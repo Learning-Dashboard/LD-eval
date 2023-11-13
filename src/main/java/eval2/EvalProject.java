@@ -98,12 +98,12 @@ public class EvalProject {
 		log.info("Storing factors (" + factors.size() + " computed)\n");
 		mongodbTarget.storeFactors(projectProperties, evaluationDate, factors);
 
-		/*
 		log.info("Computing Indicators...\n");
 		Collection<Indicator> indicators = computeIndicators();
 		log.info("Storing indicators (" + factors.size() + " computed)\n");
 		mongodbTarget.storeIndicators(projectProperties, evaluationDate, indicators);
 
+		/*
 		List<Relation> metricrelations = computeMetricRelations(metrics);
 		log.info("Storing metrics relations (" + metricrelations.size() + " computed)\n");
 		mongodbTarget.storeRelations(projectProperties, metricrelations);
@@ -160,7 +160,7 @@ public class EvalProject {
 
 			try {
 				if (fact.getMetrics().length != fact.getWeights().length)
-					throw new IllegalArgumentException("Metrics and weights arrays must have the same length.");
+					throw new IllegalArgumentException("Metrics and weights arrays must be the same length.");
 				else {
 					if (nonWeighted && someNonWeighted)
 						throw new IllegalArgumentException("Weights arrays must be fully weighted or fully non weighted.");
@@ -201,14 +201,14 @@ public class EvalProject {
 			StringBuilder info = new StringBuilder("metrics: {");
 			if (fact.getMetrics().length == fact.getWeights().length) {
 				if (someNonWeighted && nonWeighted)
-					info.append(" }, formula: average, value: ").append(fact.getValue());
+					info.append(" }, formula: average, value: ").append(fact.getValue().floatValue());
 				else {
 					for (Map.Entry<String, Double> entry : metricValues.entrySet()) {
-						String metricInfo = " " + entry.getKey() + " (value: " + entry.getValue() + ", ";
+						String metricInfo = " " + entry.getKey() + " (value: " + entry.getValue().floatValue() + ", ";
 						if (weighted) {
 							for (int i = 0; i < fact.getMetrics().length; ++i) {
 								if (Objects.equals(entry.getKey(), fact.getMetrics()[i])) {
-									Double w = fact.getWeights()[i] * 100.0;
+									Double w = fact.getWeights()[i].floatValue() * 100.0;
 									metricInfo += "weight: " + w.intValue() + "%);";
 									break;
 								}
@@ -216,11 +216,11 @@ public class EvalProject {
 						} else metricInfo += "no weighted);";
 						info.append(metricInfo);
 					}
-					if (weighted) info.append(" }, formula: weighted average, value: ").append(fact.getValue());
-					else info.append(" }, formula: average, value: ").append(fact.getValue());
+					if (weighted) info.append(" }, formula: weighted average, value: ").append(fact.getValue().floatValue());
+					else info.append(" }, formula: average, value: ").append(fact.getValue().floatValue());
 				}
 			}
-			else info.append(" }, formula: average, value: ").append(fact.getValue());
+			else info.append(" }, formula: average, value: ").append(fact.getValue().floatValue());
 
 			fact.setInfo(info.toString());
 			result.add(fact);
@@ -272,29 +272,49 @@ public class EvalProject {
 		Map<String,Indicator> indicatorMap = readIndicatorMap();
 
 		for ( Entry<String,Indicator> e : indicatorMap.entrySet() ) {
+
 			Indicator ind = e.getValue();
 			if ( !ind.isEnabled() ) {
 				log.info("Indicator " + ind.getIndicator() + " is disabled.\n");
 				continue;
-			} else {
-				log.info("Computing indicator " + ind.getIndicator() + ".\n") ; 
 			}
-			
-			Map<String,Object> parameters = new HashMap<>();
-			parameters.put( "evaluationDate", evaluationDate);
-			parameters.put( "project", projectProperties.getProperty("project.name") );
-			parameters.put( "targetType", e.getValue().getType() );
-			parameters.put( "targetId", e.getValue().getMongodbId() );
-			
-			Map<String,Object> results = mongodbTarget.execute(parameters, indicatorQuery, false);
-			String metricDef = indicatorQuery.getProperty( "metric" );
+			else log.info("Computing indicator " + ind.getIndicator() + ".\n");
+
+			HashMap<String, Double> factorValues = new HashMap<>();
+			List<String> missingFactors = new ArrayList<>();
+
+			for (String factor : ind.getFactors()) {
+				Map<String, Object> parameters = new HashMap<>();
+				parameters.put("evaluationDate", evaluationDate);
+				parameters.put("project", projectProperties.getProperty("project.name"));
+				parameters.put("factor", factor);
+				Map<String, Object> results = mongodbTarget.execute(parameters, indicatorQuery, false);
+				if (!results.isEmpty() && results.containsKey("value")) {
+					Object value = results.get("value");
+					if (value instanceof Double)
+						factorValues.put(factor, (Double) value);
+					else if (value instanceof Integer)
+						factorValues.put(factor, ((Integer) value).doubleValue());
+				}
+				else missingFactors.add(factor);
+			}
 
 			Double indicatorValue;
+			boolean nonWeighted = Arrays.asList(ind.getWeights()).contains(-1.0);
+			boolean someNonWeighted = Arrays.stream(ind.getWeights()).anyMatch(val -> !val.equals(-1.0));
+
 			try {
-				indicatorValue = evaluate( metricDef, results );
-			} catch (RuntimeException rte) {
-				log.warning("Evaluation of formula " + metricDef + " failed.\nIndicator: " + ind.getName());
-				if ( ind.onErrorSet0() ) {
+				if (ind.getFactors().length != ind.getWeights().length)
+					throw new IllegalArgumentException("Factors and weights arrays must be the same length.");
+				else {
+					if (nonWeighted && someNonWeighted)
+						throw new IllegalArgumentException("Weights arrays must be fully weighted or fully non weighted.");
+				}
+				indicatorValue = evaluate(ind.getFactors(), ind.getWeights(), factorValues);
+			}
+			catch (IllegalArgumentException exc) {
+				log.warning(exc.getMessage() + "\nIndicator: " + ind.getName() + "\n");
+				if (ind.onErrorSet0()) {
 					log.warning("Indicator " + ind.getName() + " set to 0.\n");
 					indicatorValue = 0.0;
 				} else {
@@ -304,7 +324,8 @@ public class EvalProject {
 				
 			}
 
-			if ( indicatorValue.isNaN() || indicatorValue.isInfinite() ) {
+			if (indicatorValue.isNaN() || indicatorValue.isInfinite()) {
+				log.warning("Evaluation of indicator " + ind.getIndicator() + " resulted in non-numeric value.\n" );
 				if ( ind.onErrorSet0() ) {
 					log.warning("Indicator " + ind.getName() + " set to 0.\n");
 					indicatorValue = 0.0;
@@ -318,15 +339,36 @@ public class EvalProject {
 			
 			ind.setValue(indicatorValue);
 			ind.setEvaluationDate(evaluationDate);
+			String[] missingChildren = new String[missingFactors.size()];
+			ind.setMissingChildren(missingFactors.toArray(missingChildren));
+			boolean weighted = !Arrays.stream(ind.getWeights()).allMatch(val -> val.equals(-1.0));
 			
-			String info;
-			info = "parameters: " + parameters + "\n";
-			info += "query-properties: " + indicatorQuery.getQueryParameter().toString() + "\n";
-			info += "executionResults: " + results.toString() + "\n";
-			info += "formula: " + metricDef + "\n";
-			info += "value: " + indicatorValue;
+			StringBuilder info = new StringBuilder("factors: {");
+			if (ind.getFactors().length == ind.getWeights().length) {
+				if (someNonWeighted && nonWeighted)
+					info.append(" }, formula: average, value: ").append(ind.getValue().floatValue());
+				else {
+					for (Map.Entry<String, Double> entry : factorValues.entrySet()) {
+						String factorInfo = " " + entry.getKey() + " (value: " + entry.getValue().floatValue() + ", ";
+						if (weighted) {
+							for (int i = 0; i < ind.getFactors().length; ++i) {
+								if (Objects.equals(entry.getKey(), ind.getFactors()[i])) {
+									Double w = ind.getWeights()[i].floatValue() * 100.0;
+									factorInfo += "weight: " + w.intValue() + "%);";
+									break;
+								}
+							}
+						}
+						else factorInfo += "no weighted);";
+						info.append(factorInfo);
+					}
+					if (weighted) info.append(" }, formula: weighted average, value: ").append(ind.getValue().floatValue());
+					else info.append(" }, formula: average, value: ").append(ind.getValue().floatValue());
+				}
+			}
+			else info.append(" }, formula: average, value: ").append(ind.getValue().floatValue());
 
-			ind.setInfo(info);
+			ind.setInfo(info.toString());
 			result.add(ind);
 		}
 		
@@ -502,18 +544,16 @@ public class EvalProject {
 		for ( String i : indicators ) {
 			Boolean enabled = Boolean.parseBoolean(  indicatorProperties.getProperty(i + ".enabled") );
 			String project = projectProperties.getProperty("project.name");
-			String[] parents = getAsStringArray( indicatorProperties.getProperty(i + ".parents") );
+			String[] factors = getAsStringArray( indicatorProperties.getProperty(i + ".factors") );
 			Double[] weights = getAsDoubleArray( indicatorProperties.getProperty(i + ".weights") );
 			String name = indicatorProperties.getProperty(i + ".name");
 			String description = indicatorProperties.getProperty(i + ".description");
 
 			Double value = null;
 			String onError = indicatorProperties.getProperty(i + ".onError");
-			if ( onError == null ) {
-				onError = projectErrorStrategy;
-			}
+			if ( onError == null ) onError = projectErrorStrategy;
 
-			Indicator ind = new Indicator(enabled, project, i, evaluationDate, parents, weights, null, name, description, null, value, null, onError );
+			Indicator ind = new Indicator(enabled, project, i, evaluationDate, factors, weights, null, name, description, null, value, null, onError);
 			result.put(i, ind);
 		}
 		

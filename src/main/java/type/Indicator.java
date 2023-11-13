@@ -51,8 +51,8 @@ public class Indicator extends IndexItem {
 		return id;
 	}
 
-	public void setFactor(String factor) {
-		this.id = factor;
+	public void setIndicator(String indicator) {
+		this.id = indicator;
 	}
 
 	public String[] getFactors() {
@@ -76,11 +76,10 @@ public class Indicator extends IndexItem {
 		result.put("weights", arrayListWeights);
 		result.put("name", name);
 		result.put("description", description);
-		result.put("datasource", datasource);
+		result.put("datasource", "Learning Dashboard");
 		result.put("value", value);
 		result.put("info", info);
 		result.put("missing_factors", arrayListMissingFactors);
-		result.put("dates_mismatch_days", 0);
 		return result;
 	}
 
