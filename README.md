@@ -14,12 +14,12 @@ The folder structure shown below defines the evaluation of one project named 'de
     +---default
     |   |
     |   +---factors
-    |   |     factor1.properties
-    |   |     factor1.query
+    |   |     factor.properties
+    |   |     factor.query
     |   |
     |   +---indicators
-    |   |     indicator1.properties
-    |   |     indicator1.query
+    |   |     indicator.properties
+    |   |     indicator.query
     |   |
     |   +---metrics
     |   |     metric1.properties
@@ -45,7 +45,7 @@ The folder structure shown below defines the evaluation of one project named 'de
 
 ### projects/eval.properties
 
-The *eval.properties* file defines global configuration options. Currently, only the url for notifying the dashboard about a new evaluation is contained:
+The *eval.properties* file defines global configuration options. Currently, only the url for notifying the dashboard about a new evaluation is:
 
 ```
 dashboard.notification.url=http://<address>/api/strategicIndicators/assess
@@ -287,7 +287,7 @@ The factors.properties file defines factors to compute along with their properti
   
 + The *weights* attribute sets the strength of the influence. Obviously, the lists in 'indicators' and 'weights' have to have the same length!
   
-+ The *onError* attribute tells qr-eval what to do in case of factor computation errors (e.g. no metrics influence a factor, which results in a division by zero).
++ The *onError* attribute tells LD-eval what to do in case of factor computation errors (e.g. no metrics influence a factor, which results in a division by zero).
 
 Example of factor definition (factor1):
 
