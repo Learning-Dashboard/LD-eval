@@ -158,6 +158,8 @@ public class Eval {
 			// optional default is GET
 			con.setRequestMethod("GET");
 
+			con.setRequestProperty("X-API-Key", "apiKey_admin");
+
 			return  con.getResponseCode();
 			
 		} catch (Exception e) {
